@@ -68,7 +68,7 @@ API endpoints:
 
 ### User permissions
 
-Authentication is required by default. For local read-only dashboard development, explicitly set `DEICING_LOCAL_MODE=true`. Production deployments must configure `DEICING_USERS` through a secret manager or private environment; never commit credentials. Send configured keys as bearer tokens:
+Authentication is required by default. For local read-only dashboard development, explicitly set `DEICING_LOCAL_MODE=true` with `DEICING_ENV=development`. Production deployments must set `DEICING_ENV=production` and configure `DEICING_USERS` through a secret manager or private environment; never commit credentials. Send configured keys as bearer tokens:
 
 ```text
 Authorization: Bearer your-api-key
@@ -76,7 +76,9 @@ Authorization: Bearer your-api-key
 
 Roles are `viewer` (read operations), `dispatcher` (read and dispatch), and `admin` (all current permissions). Local mode only provides `viewer` access.
 
-The dashboard station selector supports `DEN`, `BZN`, and `ORD`. Station profiles are stored in [data/stations.json](data/stations.json); the current release uses shared mock flight and truck operations data with station-specific weather and airport context.
+The dashboard station selector supports `DEN`, `BZN`, `ORD`, and `JFK`. Station profiles are stored in [data/stations.json](data/stations.json); the current release uses shared mock flight and truck operations data with station-specific weather and airport context.
+
+The dashboard also shows mock snow/precipitation conditions for all supported stations, estimated spray completion time for each flight, and the time remaining until the next mock departure.
 
 ## Structure
 

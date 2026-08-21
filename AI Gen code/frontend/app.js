@@ -11,10 +11,13 @@ const elements = {
   deicingCount: document.querySelector('#deicing-count'),
   utilization: document.querySelector('#utilization'),
   avgDuration: document.querySelector('#avg-duration'),
+  nextFlight: document.querySelector('#next-flight'),
+  nextFlightDetail: document.querySelector('#next-flight-detail'),
   queueStatus: document.querySelector('#queue-status'),
   flightRows: document.querySelector('#flight-rows'),
   truckList: document.querySelector('#truck-list'),
   alertList: document.querySelector('#alert-list'),
+  stationWeatherGrid: document.querySelector('#station-weather-grid'),
   toast: document.querySelector('#toast'),
 };
 
@@ -45,6 +48,10 @@ function renderReport(report) {
   elements.deicingCount.textContent = summary['Deicing Required Count'];
   elements.utilization.textContent = summary['Equipment Utilization'];
   elements.avgDuration.textContent = summary['Avg Predicted Deice Time'].replace(' mins', 'm');
+  elements.nextFlight.textContent = formatTime(report.next_flight.scheduled_departure);
+  elements.nextFlightDetail.textContent = report.next_flight.minutes_until_departure >= 0
+    ? `${report.next_flight.flight_id} · ${report.next_flight.minutes_until_departure} min`
+    : `${report.next_flight.flight_id} · departed`;
   elements.queueStatus.textContent = `${recommendations.length} units assigned`;
 
   elements.flightRows.innerHTML = flights
@@ -52,7 +59,8 @@ function renderReport(report) {
     .map((flight) => `<tr>
       <td>${escapeHTML(flight.flight_id)} <small>${escapeHTML(flight.aircraft_type)}</small></td>
       <td>${formatTime(flight.scheduled_departure)}</td>
-      <td>${escapeHTML(flight.gate)}</td>
+      <td>${formatTime(flight.spray_completion_time)}</td>
+      <td class="${flight.minutes_until_departure >= 0 ? 'assigned' : 'unassigned'}">${flight.minutes_until_departure >= 0 ? `${flight.minutes_until_departure} min` : 'departed'}</td>
       <td class="priority">${flight.deice_priority_score.toFixed(2)}</td>
       <td class="${flight.assigned_truck_id ? 'assigned' : 'unassigned'}">${escapeHTML(flight.assigned_truck_id || 'Awaiting unit')}</td>
     </tr>`).join('');
@@ -65,6 +73,15 @@ function renderReport(report) {
   elements.alertList.innerHTML = alerts.length
     ? alerts.map((alert) => `<div class="alert-item">${escapeHTML(alert)}</div>`).join('')
     : '<div class="alert-item no-alerts">No active operational alerts.</div>';
+}
+
+function renderStationWeather(stations) {
+  elements.stationWeatherGrid.innerHTML = stations.map((station) => `<article class="station-weather-card">
+    <div class="station-weather-heading"><strong>${escapeHTML(station.code)}</strong><span>${escapeHTML(station.severity.replaceAll('_', ' '))}</span></div>
+    <h4>${escapeHTML(station.name)}</h4>
+    <div class="station-temperature">${station.temperature_c}<sup>°C</sup></div>
+    <p>${escapeHTML(station.precipitation_type.replaceAll('_', ' '))} · ${station.snow_rate_cm_hr} cm/hr snow · ${station.wind_speed_kts} kts wind</p>
+  </article>`).join('');
 }
 
 async function loadOperations(showToast = false) {
@@ -87,9 +104,14 @@ async function loadOperations(showToast = false) {
 }
 
 async function loadStations() {
-  const response = await fetch('/stations', { cache: 'no-store' });
+  const [response, overviewResponse] = await Promise.all([
+    fetch('/stations', { cache: 'no-store' }),
+    fetch('/stations/overview', { cache: 'no-store' }),
+  ]);
   if (!response.ok) throw new Error(`Stations API returned ${response.status}`);
+  if (!overviewResponse.ok) throw new Error(`Station overview API returned ${overviewResponse.status}`);
   const stations = await response.json();
+  renderStationWeather(await overviewResponse.json());
   elements.stationSelect.innerHTML = stations
     .map((station) => `<option value="${escapeHTML(station.code)}">${escapeHTML(station.code)} · ${escapeHTML(station.name)}</option>`)
     .join('');

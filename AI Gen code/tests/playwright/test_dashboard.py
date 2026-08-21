@@ -89,8 +89,13 @@ def test_dashboard_renders_operations_data(page: Page, application_url: str):
     expect(page.locator("h1")).to_have_text("Deicing control")
     expect(page.locator("#flight-count")).to_have_text("8")
     expect(page.locator("#deicing-count")).to_have_text("8")
+    expect(page.locator("#station-weather-grid .station-weather-card")).to_have_count(4)
+    expect(page.locator("#station-weather-grid")).to_contain_text("freezing rain")
+    expect(page.locator("#station-weather-grid")).to_contain_text("JFK")
+    expect(page.locator("#next-flight")).not_to_have_text("--")
     expect(page.locator("#flight-rows tr")).to_have_count(8)
     expect(page.locator("#flight-rows")).to_contain_text("MOCK-FLT-001")
+    expect(page.locator("thead")).to_contain_text("Spray complete")
     expect(page.locator("#truck-list")).to_contain_text("MOCK-TRUCK-04")
     expect(page.locator("#alert-list")).to_contain_text("CRITICAL RISK")
     assert external_requests == []

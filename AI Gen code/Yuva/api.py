@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 from pathlib import Path
 from typing import Any
@@ -9,7 +9,6 @@ from fastapi.staticfiles import StaticFiles
 
 from .Deicing import (
     DeicingAIEngine,
-    FlightStatus,
     OptimizationEngine,
     OperationsDashboard,
     WeatherData,
@@ -55,6 +54,7 @@ def build_operations_report(station_code: str = "DEN") -> dict[str, Any]:
     weather = WeatherData(**station["weather"])
     ai_engine = DeicingAIEngine()
 
+    flight_timing = {}
     for flight in flights:
         if ai_engine.predict_deicing_need(flight, weather):
             ai_engine.estimate_deicing_duration(flight, weather)
@@ -65,6 +65,27 @@ def build_operations_report(station_code: str = "DEN") -> dict[str, Any]:
     )
     alerts = OperationsDashboard.check_operational_alerts(flights, current_time)
     summary = OperationsDashboard.generate_shift_summary(flights, trucks)
+    for flight in flights:
+        completion_time = current_time + timedelta(
+            minutes=flight.estimated_deice_duration_min
+        )
+        minutes_until_departure = round(
+            (flight.scheduled_departure - current_time).total_seconds() / 60
+        )
+        timing = {
+            "spray_completion_time": completion_time.isoformat(),
+            "minutes_until_departure": minutes_until_departure,
+            "departure_status": "scheduled" if minutes_until_departure >= 0 else "departed",
+        }
+        flight_timing[flight.flight_id] = timing
+
+    future_flights = [
+        flight for flight in flights if flight.scheduled_departure >= current_time
+    ]
+    next_flight = min(
+        future_flights or flights,
+        key=lambda flight: flight.scheduled_departure,
+    )
 
     return {
         "generated_at": current_time.isoformat(),
@@ -83,6 +104,12 @@ def build_operations_report(station_code: str = "DEN") -> dict[str, Any]:
             "wind_speed_kts": weather.wind_speed_kts,
             "severity": weather.severity.name,
         },
+        "next_flight": {
+            "flight_id": next_flight.flight_id,
+            "scheduled_departure": next_flight.scheduled_departure.isoformat(),
+            "minutes_until_departure": flight_timing[next_flight.flight_id]["minutes_until_departure"],
+            "departure_status": flight_timing[next_flight.flight_id]["departure_status"],
+        },
         "flights": [
             {
                 "flight_id": flight.flight_id,
@@ -95,6 +122,9 @@ def build_operations_report(station_code: str = "DEN") -> dict[str, Any]:
                 "estimated_deice_duration_min": flight.estimated_deice_duration_min,
                 "deice_priority_score": flight.deice_priority_score,
                 "assigned_truck_id": flight.assigned_truck_id,
+                "spray_completion_time": flight_timing[flight.flight_id]["spray_completion_time"],
+                "minutes_until_departure": flight_timing[flight.flight_id]["minutes_until_departure"],
+                "departure_status": flight_timing[flight.flight_id]["departure_status"],
             }
             for flight in flights
         ],
@@ -147,6 +177,29 @@ def stations(
         {key: station[key] for key in ("code", "name", "timezone")}
         for station in load_station_profiles()
     ]
+
+
+@app.get("/stations/overview")
+def stations_overview(
+    _user: User = Depends(
+        require_roles(Role.VIEWER, Role.DISPATCHER, Role.ADMIN)
+    ),
+) -> list[dict[str, Any]]:
+    overview = []
+    for station in load_station_profiles():
+        weather = WeatherData(**station["weather"])
+        overview.append(
+            {
+                "code": station["code"],
+                "name": station["name"],
+                "temperature_c": weather.temperature_c,
+                "precipitation_type": weather.precipitation_type,
+                "snow_rate_cm_hr": weather.snow_rate_cm_hr,
+                "wind_speed_kts": weather.wind_speed_kts,
+                "severity": weather.severity.name,
+            }
+        )
+    return overview
 
 
 @app.get("/users/me")

@@ -41,6 +41,20 @@
         "snow_rate_cm_hr": 0.0,
         "wind_speed_kts": 21.0
       }
+    },
+    {
+      "code": "JFK",
+      "name": "New York John F. Kennedy International Airport",
+      "timezone": "America/New_York",
+      "deicing_pads": 5,
+      "crew_count": 16,
+      "runway_count": 5,
+      "weather": {
+        "temperature_c": -4.2,
+        "precipitation_type": "snow",
+        "snow_rate_cm_hr": 6.4,
+        "wind_speed_kts": 24.0
+      }
     }
   ]
 }

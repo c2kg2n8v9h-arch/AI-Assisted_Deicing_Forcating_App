@@ -21,7 +21,7 @@ Continuously monitor weather and airport operational data to:
 - Identify turnaround bottlenecks and delays.
 - Recommend recovery actions that improve safety and resource utilization.
 
-The initial MVP release will support deicing operations at Denver International Airport (DEN), Bozeman Yellowstone International Airport (BZN), and Chicago O'Hare International Airport (ORD). Supervisors will be able to select a station and receive station-specific weather, operational data, recommendations, and resource information.
+The initial MVP release will support deicing operations at Denver International Airport (DEN), Bozeman Yellowstone International Airport (BZN), Chicago O'Hare International Airport (ORD), and New York John F. Kennedy International Airport (JFK). Supervisors will be able to select a station and receive station-specific weather, operational data, recommendations, and resource information.
 
 ## 3. Primary User Story
 
@@ -34,6 +34,7 @@ As a ramp supervisor, I want the assistant to monitor weather, precipitation, ac
 - Denver International Airport (DEN)
 - Bozeman Yellowstone International Airport (BZN)
 - Chicago O'Hare International Airport (ORD)
+- New York John F. Kennedy International Airport (JFK)
 
 ### Future Releases
 
@@ -83,7 +84,7 @@ The system shall:
 ### Next Implementation Slices
 
 1. Add station entities, station selection, and station-scoped authorization.
-2. Add station-specific mock datasets for DEN, BZN, and ORD.
+2. Add station-specific mock datasets for DEN, BZN, ORD, and JFK.
 3. Add precipitation accumulation and frost/sleet fields to the data model.
 4. Add fluid type recommendations with explainable rules and approved reference tables.
 5. Add holdover-time calculation with source/version metadata and expiry countdowns.

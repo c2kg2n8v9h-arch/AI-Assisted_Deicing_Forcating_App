@@ -52,7 +52,10 @@ def auth_enabled() -> bool:
 
 
 def local_mode_enabled() -> bool:
-    return os.getenv("DEICING_LOCAL_MODE", "").lower() == "true"
+    return (
+        os.getenv("DEICING_LOCAL_MODE", "").lower() == "true"
+        and os.getenv("DEICING_ENV", "development").lower() != "production"
+    )
 
 
 def _find_user(api_key: str) -> User | None:

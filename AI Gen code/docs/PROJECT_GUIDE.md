@@ -29,6 +29,8 @@ python -m uvicorn Yuva.api:app --reload
 
 The API provides `/health` and `/operations`. FastAPI's interactive documentation is available at `/docs`.
 
+The dashboard includes an all-station mock weather overview, snow/precipitation details, estimated spray completion times, and next-flight countdowns.
+
 ## User roles
 
 API routes use bearer API-key authentication when `DEICING_USERS` is configured. Without credentials, the application fails closed. Local development can explicitly use read-only mode with `DEICING_LOCAL_MODE=true`.

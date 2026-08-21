@@ -30,6 +30,17 @@ class SecurityTests(unittest.TestCase):
         self.assertEqual(user.username, "local-development")
         self.assertEqual(user.role, Role.VIEWER)
 
+    def test_local_mode_is_disabled_in_production(self):
+        with patch.dict(
+            os.environ,
+            {"DEICING_LOCAL_MODE": "true", "DEICING_ENV": "production"},
+            clear=True,
+        ):
+            with self.assertRaises(HTTPException) as error:
+                get_current_user(None)
+
+        self.assertEqual(error.exception.status_code, 503)
+
     def test_configured_api_key_resolves_to_role(self):
         users = '[{"username":"dispatcher1","role":"dispatcher","api_key":"secret-key"}]'
         with patch.dict(os.environ, {"DEICING_USERS": users}):

@@ -41,11 +41,17 @@
         </div>
       </section>
 
+      <section class="station-overview" aria-label="All station weather overview">
+        <div class="section-heading"><div><p class="eyebrow">Station network</p><h3>Mock weather conditions</h3></div><span class="status-chip">4 stations</span></div>
+        <div id="station-weather-grid" class="station-weather-grid"></div>
+      </section>
+
       <section class="metric-grid" aria-label="Shift metrics">
         <article class="metric-card accent-coral"><p>Flights monitored</p><strong id="flight-count">--</strong><span>in current shift</span></article>
         <article class="metric-card accent-teal"><p>Deicing required</p><strong id="deicing-count">--</strong><span>aircraft flagged</span></article>
         <article class="metric-card accent-gold"><p>Truck utilization</p><strong id="utilization">--</strong><span>available fleet</span></article>
         <article class="metric-card accent-blue"><p>Average treatment</p><strong id="avg-duration">--</strong><span>predicted minutes</span></article>
+        <article class="metric-card accent-coral"><p>Next departure</p><strong id="next-flight">--</strong><span id="next-flight-detail">mock schedule</span></article>
       </section>
 
       <section class="content-grid">
@@ -53,8 +59,8 @@
           <div class="section-heading"><div><p class="eyebrow">Decision queue</p><h3>Flight priorities</h3></div><span id="queue-status" class="status-chip">Loading</span></div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Flight</th><th>Departure</th><th>Gate</th><th>Priority</th><th>Assigned unit</th></tr></thead>
-              <tbody id="flight-rows"><tr><td colspan="5" class="empty-state">Loading operations...</td></tr></tbody>
+              <thead><tr><th>Flight</th><th>Departure</th><th>Spray complete</th><th>Next flight</th><th>Priority</th><th>Assigned unit</th></tr></thead>
+              <tbody id="flight-rows"><tr><td colspan="6" class="empty-state">Loading operations...</td></tr></tbody>
             </table>
           </div>
         </div>
