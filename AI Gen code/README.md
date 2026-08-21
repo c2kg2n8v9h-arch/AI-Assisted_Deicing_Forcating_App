@@ -1,3 +1,4 @@
+# Created by providing prompts to AI tools
 # Airport Deicing Operations
 
 A small Python application that predicts aircraft deicing needs, estimates treatment duration, prioritizes flights, assigns available deicing trucks, and reports operational risks.
