@@ -1,0 +1,45 @@
+{
+  "weather": {
+    "temperature_c": -3.5,
+    "precipitation_type": "snow",
+    "snow_rate_cm_hr": 2.8,
+    "wind_speed_kts": 18.0
+  },
+  "flights": [
+    {
+      "flight_id": "UA124",
+      "aircraft_type": "B777",
+      "scheduled_departure": "2026-08-20T23:37:00",
+      "gate": "B12",
+      "passengers_count": 260
+    },
+    {
+      "flight_id": "AA890",
+      "aircraft_type": "A320",
+      "scheduled_departure": "2026-08-20T23:27:00",
+      "gate": "C04",
+      "passengers_count": 140
+    },
+    {
+      "flight_id": "DL451",
+      "aircraft_type": "B737",
+      "scheduled_departure": "2026-08-21T00:17:00",
+      "gate": "A08",
+      "passengers_count": 160
+    }
+  ],
+  "trucks": [
+    {
+      "truck_id": "TRK-01",
+      "location_gate": "A01",
+      "fluid_capacity_pct": 85.0,
+      "is_available": true
+    },
+    {
+      "truck_id": "TRK-02",
+      "location_gate": "C01",
+      "fluid_capacity_pct": 90.0,
+      "is_available": true
+    }
+  ]
+}
