@@ -20,7 +20,7 @@ class DeicingAIEngineTests(unittest.TestCase):
         self.engine = DeicingAIEngine()
         self.now = datetime(2026, 8, 20, 23, 0)
         self.flight = Flight(
-            "UA124",
+            "MOCK-FLT-001",
             "B777",
             self.now + timedelta(minutes=35),
             "B12",
@@ -62,10 +62,10 @@ class DeicingAIEngineTests(unittest.TestCase):
         weather, flights, trucks = load_operations_data(data_path)
 
         self.assertEqual(weather.precipitation_type, "snow")
-        self.assertEqual(len(flights), 3)
-        self.assertEqual(flights[0].flight_id, "UA124")
-        self.assertEqual(len(trucks), 2)
-        self.assertEqual(trucks[0].truck_id, "TRK-01")
+        self.assertEqual(len(flights), 8)
+        self.assertEqual(flights[0].flight_id, "MOCK-FLT-001")
+        self.assertEqual(len(trucks), 5)
+        self.assertEqual(trucks[0].truck_id, "MOCK-TRUCK-01")
 
 
 class OptimizationEngineTests(unittest.TestCase):
@@ -79,7 +79,7 @@ class OptimizationEngineTests(unittest.TestCase):
         flights[0].deice_priority_score = 40.0
         flights[1].deice_required = True
         flights[1].deice_priority_score = 80.0
-        trucks = [DeicingTruck("TRK-01", "A01", 85.0)]
+        trucks = [DeicingTruck("MOCK-TRUCK-01", "A01", 85.0)]
 
         recommendations = OptimizationEngine.dispatch_trucks(flights, trucks, now)
 
@@ -90,10 +90,10 @@ class OptimizationEngineTests(unittest.TestCase):
 
     def test_trucks_with_low_fluid_capacity_are_not_dispatched(self):
         now = datetime(2026, 8, 20, 23, 0)
-        flight = Flight("UA124", "B777", now, "B12", 260)
+        flight = Flight("MOCK-FLT-001", "B777", now, "B12", 260)
         flight.deice_required = True
         flight.deice_priority_score = 80.0
-        truck = DeicingTruck("TRK-01", "A01", 19.0)
+        truck = DeicingTruck("MOCK-TRUCK-01", "A01", 19.0)
 
         recommendations = OptimizationEngine.dispatch_trucks([flight], [truck], now)
 
@@ -104,7 +104,7 @@ class OptimizationEngineTests(unittest.TestCase):
 class OperationsDashboardTests(unittest.TestCase):
     def test_alert_is_created_for_unassigned_at_risk_flight(self):
         now = datetime(2026, 8, 20, 23, 0)
-        flight = Flight("UA124", "B777", now + timedelta(minutes=20), "B12", 260)
+        flight = Flight("MOCK-FLT-001", "B777", now + timedelta(minutes=20), "B12", 260)
         flight.deice_required = True
         flight.estimated_deice_duration_min = 36.9
 

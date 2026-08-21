@@ -7,38 +7,91 @@
   },
   "flights": [
     {
-      "flight_id": "UA124",
+      "flight_id": "MOCK-FLT-001",
       "aircraft_type": "B777",
       "scheduled_departure": "2026-08-20T23:37:00",
       "gate": "B12",
       "passengers_count": 260
     },
     {
-      "flight_id": "AA890",
+      "flight_id": "MOCK-FLT-002",
       "aircraft_type": "A320",
       "scheduled_departure": "2026-08-20T23:27:00",
       "gate": "C04",
       "passengers_count": 140
     },
     {
-      "flight_id": "DL451",
+      "flight_id": "MOCK-FLT-003",
       "aircraft_type": "B737",
       "scheduled_departure": "2026-08-21T00:17:00",
       "gate": "A08",
       "passengers_count": 160
+    },
+    {
+      "flight_id": "MOCK-FLT-004",
+      "aircraft_type": "A330",
+      "scheduled_departure": "2026-08-21T00:42:00",
+      "gate": "D16",
+      "passengers_count": 285
+    },
+    {
+      "flight_id": "MOCK-FLT-005",
+      "aircraft_type": "A320",
+      "scheduled_departure": "2026-08-21T01:05:00",
+      "gate": "B07",
+      "passengers_count": 178
+    },
+    {
+      "flight_id": "MOCK-FLT-006",
+      "aircraft_type": "B747",
+      "scheduled_departure": "2026-08-21T01:28:00",
+      "gate": "E02",
+      "passengers_count": 365
+    },
+    {
+      "flight_id": "MOCK-FLT-007",
+      "aircraft_type": "B737",
+      "scheduled_departure": "2026-08-21T01:50:00",
+      "gate": "C11",
+      "passengers_count": 132
+    },
+    {
+      "flight_id": "MOCK-FLT-008",
+      "aircraft_type": "A320",
+      "scheduled_departure": "2026-08-21T02:15:00",
+      "gate": "A19",
+      "passengers_count": 154
     }
   ],
   "trucks": [
     {
-      "truck_id": "TRK-01",
+      "truck_id": "MOCK-TRUCK-01",
       "location_gate": "A01",
       "fluid_capacity_pct": 85.0,
       "is_available": true
     },
     {
-      "truck_id": "TRK-02",
+      "truck_id": "MOCK-TRUCK-02",
       "location_gate": "C01",
       "fluid_capacity_pct": 90.0,
+      "is_available": true
+    },
+    {
+      "truck_id": "MOCK-TRUCK-03",
+      "location_gate": "D04",
+      "fluid_capacity_pct": 64.0,
+      "is_available": true
+    },
+    {
+      "truck_id": "MOCK-TRUCK-04",
+      "location_gate": "E01",
+      "fluid_capacity_pct": 42.0,
+      "is_available": true
+    },
+    {
+      "truck_id": "MOCK-TRUCK-05",
+      "location_gate": "C09",
+      "fluid_capacity_pct": 18.0,
       "is_available": true
     }
   ]

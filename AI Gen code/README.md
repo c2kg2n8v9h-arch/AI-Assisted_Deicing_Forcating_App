@@ -21,6 +21,14 @@ Run the standard-library unit tests with:
 python -m unittest discover -s tests -p "test_*.py" -v
 ```
 
+Run browser automation tests after installing Playwright's Chromium browser:
+
+```bash
+python -m pip install -r requirements.txt
+python -m playwright install chromium
+pytest tests/playwright -v
+```
+
 ## Start the backend API
 
 Install dependencies and start the local FastAPI server:
@@ -34,7 +42,19 @@ API endpoints:
 
 - `GET http://127.0.0.1:8000/health`
 - `GET http://127.0.0.1:8000/operations`
+- `POST http://127.0.0.1:8000/operations/dispatch` (dispatcher or admin)
+- `GET http://127.0.0.1:8000/users/me`
 - Interactive API documentation: `http://127.0.0.1:8000/docs`
+
+### User permissions
+
+Authentication is disabled for local development unless `DEICING_USERS` is configured. Copy [.env.example](.env.example) to `.env`, replace the example API keys, and load it before starting the server. Send keys as bearer tokens:
+
+```text
+Authorization: Bearer your-api-key
+```
+
+Roles are `viewer` (read operations), `dispatcher` (read and dispatch), and `admin` (all current permissions).
 
 ## Structure
 

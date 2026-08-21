@@ -25,6 +25,16 @@ python -m uvicorn Yuva.api:app --reload
 
 The API provides `/health` and `/operations`. FastAPI's interactive documentation is available at `/docs`.
 
+## User roles
+
+When `DEICING_USERS` is configured, API routes use bearer API-key authentication:
+
+- `viewer`: read operations and user profile
+- `dispatcher`: viewer permissions plus dispatch operations
+- `admin`: dispatcher permissions plus administrative permissions
+
+Use [.env.example](../.env.example) as the configuration template. Keep the real `.env` file out of source control.
+
 ## Project layout
 
 ```text

@@ -2,7 +2,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI
+from dotenv import load_dotenv
+from fastapi import Depends, FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from .Deicing import (
@@ -12,11 +13,13 @@ from .Deicing import (
     OperationsDashboard,
     load_operations_data,
 )
+from .security import Role, User, auth_enabled, require_roles
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATA_PATH = PROJECT_ROOT / "data" / "operations_data.json"
 FRONTEND_PATH = PROJECT_ROOT / "frontend"
+load_dotenv(PROJECT_ROOT / ".env")
 
 app = FastAPI(
     title="Airport Deicing Operations API",
@@ -88,8 +91,33 @@ def health_check() -> dict[str, str]:
 
 
 @app.get("/operations")
-def operations() -> dict[str, Any]:
+def operations(
+    _user: User = Depends(
+        require_roles(Role.VIEWER, Role.DISPATCHER, Role.ADMIN)
+    ),
+) -> dict[str, Any]:
     return build_operations_report()
+
+
+@app.post("/operations/dispatch")
+def dispatch_operations(
+    _user: User = Depends(require_roles(Role.DISPATCHER, Role.ADMIN)),
+) -> dict[str, Any]:
+    return build_operations_report()
+
+
+@app.get("/users/me")
+def current_user(
+    user: User = Depends(
+        require_roles(Role.VIEWER, Role.DISPATCHER, Role.ADMIN)
+    ),
+) -> dict[str, Any]:
+    return {
+        "username": user.username,
+        "role": user.role.value,
+        "permissions": sorted(user.permissions),
+        "authentication_enabled": auth_enabled(),
+    }
 
 
 app.mount("/", StaticFiles(directory=FRONTEND_PATH, html=True), name="frontend")

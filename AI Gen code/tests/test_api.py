@@ -14,9 +14,12 @@ class ApiTests(unittest.TestCase):
         self.assertIn("flights", payload)
         self.assertIn("trucks", payload)
         self.assertIn("recommendations", payload)
-        self.assertEqual(len(payload["flights"]), 3)
-        self.assertEqual(len(payload["recommendations"]), 2)
-        self.assertEqual(payload["flights"][0]["assigned_truck_id"], "TRK-01")
+        self.assertEqual(len(payload["flights"]), 8)
+        self.assertEqual(len(payload["recommendations"]), 4)
+        first_flight = next(
+            flight for flight in payload["flights"] if flight["flight_id"] == "MOCK-FLT-001"
+        )
+        self.assertEqual(first_flight["assigned_truck_id"], "MOCK-TRUCK-01")
 
 
 if __name__ == "__main__":
