@@ -16,12 +16,19 @@ from Yuva.security import (
 
 
 class SecurityTests(unittest.TestCase):
-    def test_local_development_uses_admin_user_when_auth_is_unconfigured(self):
+    def test_missing_auth_configuration_fails_closed(self):
         with patch.dict(os.environ, {}, clear=True):
+            with self.assertRaises(HTTPException) as error:
+                get_current_user(None)
+
+        self.assertEqual(error.exception.status_code, 503)
+
+    def test_explicit_local_mode_uses_read_only_user(self):
+        with patch.dict(os.environ, {"DEICING_LOCAL_MODE": "true"}, clear=True):
             user = get_current_user(None)
 
         self.assertEqual(user.username, "local-development")
-        self.assertEqual(user.role, Role.ADMIN)
+        self.assertEqual(user.role, Role.VIEWER)
 
     def test_configured_api_key_resolves_to_role(self):
         users = '[{"username":"dispatcher1","role":"dispatcher","api_key":"secret-key"}]'

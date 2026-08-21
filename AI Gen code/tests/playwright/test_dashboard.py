@@ -16,6 +16,7 @@ def application_url() -> Iterator[str]:
     port = _free_port()
     environment = os.environ.copy()
     environment.pop("DEICING_USERS", None)
+    environment["DEICING_LOCAL_MODE"] = "true"
     environment["PYTHONUNBUFFERED"] = "1"
     command = [
         sys.executable,
@@ -64,13 +65,24 @@ def _wait_for_server(url: str) -> None:
 @pytest.fixture
 def page() -> Iterator[Page]:
     with sync_playwright() as playwright:
-        browser = playwright.chromium.launch()
+        headless = os.getenv("PLAYWRIGHT_HEADLESS", "false").lower() == "true"
+        wait_seconds = float(os.getenv("PLAYWRIGHT_WAIT_SECONDS", "5"))
+        browser = playwright.chromium.launch(headless=headless)
         dashboard_page = browser.new_page()
         yield dashboard_page
+        if wait_seconds > 0:
+            time.sleep(wait_seconds)
         browser.close()
 
 
 def test_dashboard_renders_operations_data(page: Page, application_url: str):
+    external_requests = []
+    page.on(
+        "request",
+        lambda request: external_requests.append(request.url)
+        if not request.url.startswith(application_url)
+        else None,
+    )
     page.goto(application_url)
 
     expect(page).to_have_title("Deicing Operations Control")
@@ -81,6 +93,7 @@ def test_dashboard_renders_operations_data(page: Page, application_url: str):
     expect(page.locator("#flight-rows")).to_contain_text("MOCK-FLT-001")
     expect(page.locator("#truck-list")).to_contain_text("MOCK-TRUCK-04")
     expect(page.locator("#alert-list")).to_contain_text("CRITICAL RISK")
+    assert external_requests == []
 
 
 def test_refresh_button_updates_dashboard(page: Page, application_url: str):
@@ -91,3 +104,14 @@ def test_refresh_button_updates_dashboard(page: Page, application_url: str):
     expect(page.locator("#toast")).to_have_text("Operations data refreshed")
     expect(page.locator("#toast")).to_have_class(re.compile(r"\bvisible\b"))
     expect(page.locator("#queue-status")).to_contain_text("units assigned")
+
+
+def test_station_selection_updates_station_context(page: Page, application_url: str):
+    page.goto(application_url)
+
+    page.locator("#station-select").select_option("BZN")
+
+    expect(page.locator("#station-name")).to_have_text(
+        "Bozeman Yellowstone International Airport (BZN)"
+    )
+    expect(page.locator("#temperature")).to_have_text("-8")

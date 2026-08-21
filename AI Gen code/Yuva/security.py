@@ -51,6 +51,10 @@ def auth_enabled() -> bool:
     return bool(os.getenv("DEICING_USERS", ""))
 
 
+def local_mode_enabled() -> bool:
+    return os.getenv("DEICING_LOCAL_MODE", "").lower() == "true"
+
+
 def _find_user(api_key: str) -> User | None:
     for configured_user in _configured_users():
         configured_key = str(configured_user.get("api_key", ""))
@@ -72,7 +76,12 @@ def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
 ) -> User:
     if not auth_enabled():
-        return User("local-development", Role.ADMIN, ROLE_PERMISSIONS[Role.ADMIN])
+        if local_mode_enabled():
+            return User("local-development", Role.VIEWER, ROLE_PERMISSIONS[Role.VIEWER])
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Authentication is not configured",
+        )
 
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise HTTPException(

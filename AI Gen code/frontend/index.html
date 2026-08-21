@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#102a43" />
     <title>Deicing Operations Control</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
@@ -21,7 +18,10 @@
           </div>
         </div>
         <div class="topbar-actions">
-          <span class="live-indicator"><span></span> Live model</span>
+          <label class="station-picker">Station
+            <select id="station-select" aria-label="Select airport station"></select>
+          </label>
+          <span class="live-indicator"><span></span> Mock model</span>
           <button id="refresh-button" class="refresh-button" type="button">Refresh data</button>
         </div>
       </header>
@@ -31,7 +31,7 @@
           <p class="eyebrow">Shift overview</p>
           <h2>Keep departures moving<br /><em>through the weather.</em></h2>
           <p class="hero-note">Priority decisions are recalculated from the current weather feed, departure window, passenger impact, and aircraft treatment time.</p>
-          <p class="timestamp">Last model run <strong id="generated-at">Loading...</strong></p>
+          <p class="timestamp"><strong id="station-name">Loading station...</strong> · Last model run <strong id="generated-at">Loading...</strong></p>
         </div>
         <div class="weather-panel">
           <div class="panel-label">Weather feed <span id="weather-severity">--</span></div>

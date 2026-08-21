@@ -1,5 +1,7 @@
 const elements = {
   generatedAt: document.querySelector('#generated-at'),
+  stationName: document.querySelector('#station-name'),
+  stationSelect: document.querySelector('#station-select'),
   temperature: document.querySelector('#temperature'),
   severity: document.querySelector('#weather-severity'),
   precipitation: document.querySelector('#precipitation'),
@@ -20,9 +22,20 @@ function formatTime(value) {
   return new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  }[character]));
+}
+
 function renderReport(report) {
   const { weather, flights, trucks, recommendations, alerts, summary } = report;
   elements.generatedAt.textContent = formatTime(report.generated_at);
+  elements.stationName.textContent = `${report.station.name} (${report.station.code})`;
   elements.temperature.textContent = weather.temperature_c;
   elements.severity.textContent = weather.severity.replaceAll('_', ' ');
   elements.precipitation.textContent = weather.precipitation_type.replaceAll('_', ' ');
@@ -37,27 +50,27 @@ function renderReport(report) {
   elements.flightRows.innerHTML = flights
     .sort((a, b) => b.deice_priority_score - a.deice_priority_score)
     .map((flight) => `<tr>
-      <td>${flight.flight_id} <small>${flight.aircraft_type}</small></td>
+      <td>${escapeHTML(flight.flight_id)} <small>${escapeHTML(flight.aircraft_type)}</small></td>
       <td>${formatTime(flight.scheduled_departure)}</td>
-      <td>${flight.gate}</td>
+      <td>${escapeHTML(flight.gate)}</td>
       <td class="priority">${flight.deice_priority_score.toFixed(2)}</td>
-      <td class="${flight.assigned_truck_id ? 'assigned' : 'unassigned'}">${flight.assigned_truck_id || 'Awaiting unit'}</td>
+      <td class="${flight.assigned_truck_id ? 'assigned' : 'unassigned'}">${escapeHTML(flight.assigned_truck_id || 'Awaiting unit')}</td>
     </tr>`).join('');
 
   elements.truckList.innerHTML = trucks.map((truck) => `<div class="truck-row">
-    <div><p class="truck-name">${truck.truck_id} ${truck.is_available ? '· assigned' : '· busy'}</p><span class="truck-location">Gate ${truck.location_gate} · ${truck.assigned_flight_id || 'No flight'}</span></div>
+    <div><p class="truck-name">${escapeHTML(truck.truck_id)} ${truck.is_available ? '· assigned' : '· busy'}</p><span class="truck-location">Gate ${escapeHTML(truck.location_gate)} · ${escapeHTML(truck.assigned_flight_id || 'No flight')}</span></div>
     <span class="capacity ${truck.fluid_capacity_pct < 30 ? 'low' : ''}">${truck.fluid_capacity_pct}%</span>
   </div>`).join('');
 
   elements.alertList.innerHTML = alerts.length
-    ? alerts.map((alert) => `<div class="alert-item">${alert}</div>`).join('')
+    ? alerts.map((alert) => `<div class="alert-item">${escapeHTML(alert)}</div>`).join('')
     : '<div class="alert-item no-alerts">No active operational alerts.</div>';
 }
 
 async function loadOperations(showToast = false) {
   elements.queueStatus.textContent = 'Updating';
   try {
-    const response = await fetch('/operations', { cache: 'no-store' });
+    const response = await fetch(`/operations?station=${elements.stationSelect.value}`, { cache: 'no-store' });
     if (!response.ok) throw new Error(`API returned ${response.status}`);
     renderReport(await response.json());
     if (showToast) {
@@ -73,6 +86,20 @@ async function loadOperations(showToast = false) {
   }
 }
 
+async function loadStations() {
+  const response = await fetch('/stations', { cache: 'no-store' });
+  if (!response.ok) throw new Error(`Stations API returned ${response.status}`);
+  const stations = await response.json();
+  elements.stationSelect.innerHTML = stations
+    .map((station) => `<option value="${escapeHTML(station.code)}">${escapeHTML(station.code)} · ${escapeHTML(station.name)}</option>`)
+    .join('');
+  elements.stationSelect.value = 'DEN';
+}
+
+elements.stationSelect.addEventListener('change', () => loadOperations(true));
 document.querySelector('#refresh-button').addEventListener('click', () => loadOperations(true));
-loadOperations();
+loadStations().then(loadOperations).catch((error) => {
+  elements.queueStatus.textContent = 'Offline';
+  console.error(error);
+});
 setInterval(loadOperations, 60000);

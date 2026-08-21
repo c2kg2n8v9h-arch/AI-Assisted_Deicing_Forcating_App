@@ -4,6 +4,10 @@
 
 This project predicts deicing requirements, estimates treatment duration, assigns available deicing trucks, and reports operational risks.
 
+The product requirements and implementation roadmap are documented in [PRODUCT_REQUIREMENTS.md](PRODUCT_REQUIREMENTS.md).
+
+This release is mock-data only. It has no live weather, flight, airport, GPS, or external database integration.
+
 ## Run the application
 
 From the project root, run:
@@ -27,7 +31,7 @@ The API provides `/health` and `/operations`. FastAPI's interactive documentatio
 
 ## User roles
 
-When `DEICING_USERS` is configured, API routes use bearer API-key authentication:
+API routes use bearer API-key authentication when `DEICING_USERS` is configured. Without credentials, the application fails closed. Local development can explicitly use read-only mode with `DEICING_LOCAL_MODE=true`.
 
 - `viewer`: read operations and user profile
 - `dispatcher`: viewer permissions plus dispatch operations

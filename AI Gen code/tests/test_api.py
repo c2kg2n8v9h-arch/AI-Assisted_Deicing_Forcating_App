@@ -1,6 +1,6 @@
 import unittest
 
-from Yuva.api import build_operations_report, health_check
+from Yuva.api import build_operations_report, health_check, load_station_profiles
 
 
 class ApiTests(unittest.TestCase):
@@ -20,6 +20,16 @@ class ApiTests(unittest.TestCase):
             flight for flight in payload["flights"] if flight["flight_id"] == "MOCK-FLT-001"
         )
         self.assertEqual(first_flight["assigned_truck_id"], "MOCK-TRUCK-01")
+
+    def test_supported_stations_have_station_specific_weather(self):
+        stations = load_station_profiles()
+
+        self.assertEqual({station["code"] for station in stations}, {"DEN", "BZN", "ORD"})
+        self.assertNotEqual(
+            build_operations_report("DEN")["weather"],
+            build_operations_report("ORD")["weather"],
+        )
+        self.assertEqual(build_operations_report("BZN")["station"]["code"], "BZN")
 
 
 if __name__ == "__main__":

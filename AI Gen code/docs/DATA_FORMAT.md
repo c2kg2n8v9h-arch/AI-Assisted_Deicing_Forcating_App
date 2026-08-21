@@ -2,6 +2,8 @@
 
 The sample file is [operations_data.json](../data/operations_data.json).
 
+Supported station profiles are stored in [stations.json](../data/stations.json). Each profile contains a station code, airport name, timezone, runway and deicing-pad counts, crew count, and station-specific weather.
+
 ## Weather
 
 - `temperature_c`: Air temperature in Celsius.

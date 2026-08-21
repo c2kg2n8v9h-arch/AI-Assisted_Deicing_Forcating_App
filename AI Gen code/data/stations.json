@@ -1,0 +1,46 @@
+{
+  "stations": [
+    {
+      "code": "DEN",
+      "name": "Denver International Airport",
+      "timezone": "America/Denver",
+      "deicing_pads": 6,
+      "crew_count": 18,
+      "runway_count": 6,
+      "weather": {
+        "temperature_c": -3.5,
+        "precipitation_type": "snow",
+        "snow_rate_cm_hr": 2.8,
+        "wind_speed_kts": 18.0
+      }
+    },
+    {
+      "code": "BZN",
+      "name": "Bozeman Yellowstone International Airport",
+      "timezone": "America/Denver",
+      "deicing_pads": 2,
+      "crew_count": 7,
+      "runway_count": 2,
+      "weather": {
+        "temperature_c": -8.0,
+        "precipitation_type": "snow",
+        "snow_rate_cm_hr": 1.7,
+        "wind_speed_kts": 12.0
+      }
+    },
+    {
+      "code": "ORD",
+      "name": "Chicago O'Hare International Airport",
+      "timezone": "America/Chicago",
+      "deicing_pads": 8,
+      "crew_count": 24,
+      "runway_count": 8,
+      "weather": {
+        "temperature_c": -1.5,
+        "precipitation_type": "freezing_rain",
+        "snow_rate_cm_hr": 0.0,
+        "wind_speed_kts": 21.0
+      }
+    }
+  ]
+}

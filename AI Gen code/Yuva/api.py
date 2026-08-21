@@ -1,9 +1,10 @@
 from datetime import datetime
+import json
 from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.staticfiles import StaticFiles
 
 from .Deicing import (
@@ -11,6 +12,7 @@ from .Deicing import (
     FlightStatus,
     OptimizationEngine,
     OperationsDashboard,
+    WeatherData,
     load_operations_data,
 )
 from .security import Role, User, auth_enabled, require_roles
@@ -18,6 +20,7 @@ from .security import Role, User, auth_enabled, require_roles
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATA_PATH = PROJECT_ROOT / "data" / "operations_data.json"
+STATIONS_PATH = PROJECT_ROOT / "data" / "stations.json"
 FRONTEND_PATH = PROJECT_ROOT / "frontend"
 load_dotenv(PROJECT_ROOT / ".env")
 
@@ -28,10 +31,28 @@ app = FastAPI(
 )
 
 
-def build_operations_report() -> dict[str, Any]:
+def load_station_profiles() -> list[dict[str, Any]]:
+    with STATIONS_PATH.open(encoding="utf-8") as data_file:
+        return json.load(data_file)["stations"]
+
+
+def get_station_profile(station_code: str) -> dict[str, Any]:
+    station_code = station_code.upper()
+    station = next(
+        (item for item in load_station_profiles() if item["code"] == station_code),
+        None,
+    )
+    if station is None:
+        raise HTTPException(status_code=404, detail="Unsupported station")
+    return station
+
+
+def build_operations_report(station_code: str = "DEN") -> dict[str, Any]:
     """Run the deicing pipeline and return a JSON-serializable report."""
     current_time = datetime.now()
-    weather, flights, trucks = load_operations_data(DATA_PATH)
+    station = get_station_profile(station_code)
+    _, flights, trucks = load_operations_data(DATA_PATH)
+    weather = WeatherData(**station["weather"])
     ai_engine = DeicingAIEngine()
 
     for flight in flights:
@@ -47,6 +68,14 @@ def build_operations_report() -> dict[str, Any]:
 
     return {
         "generated_at": current_time.isoformat(),
+        "station": {
+            "code": station["code"],
+            "name": station["name"],
+            "timezone": station["timezone"],
+            "deicing_pads": station["deicing_pads"],
+            "crew_count": station["crew_count"],
+            "runway_count": station["runway_count"],
+        },
         "weather": {
             "temperature_c": weather.temperature_c,
             "precipitation_type": weather.precipitation_type,
@@ -92,18 +121,32 @@ def health_check() -> dict[str, str]:
 
 @app.get("/operations")
 def operations(
+    station: str = Query("DEN", min_length=3, max_length=3),
     _user: User = Depends(
         require_roles(Role.VIEWER, Role.DISPATCHER, Role.ADMIN)
     ),
 ) -> dict[str, Any]:
-    return build_operations_report()
+    return build_operations_report(station)
 
 
 @app.post("/operations/dispatch")
 def dispatch_operations(
+    station: str = Query("DEN", min_length=3, max_length=3),
     _user: User = Depends(require_roles(Role.DISPATCHER, Role.ADMIN)),
 ) -> dict[str, Any]:
-    return build_operations_report()
+    return build_operations_report(station)
+
+
+@app.get("/stations")
+def stations(
+    _user: User = Depends(
+        require_roles(Role.VIEWER, Role.DISPATCHER, Role.ADMIN)
+    ),
+) -> list[dict[str, Any]]:
+    return [
+        {key: station[key] for key in ("code", "name", "timezone")}
+        for station in load_station_profiles()
+    ]
 
 
 @app.get("/users/me")
