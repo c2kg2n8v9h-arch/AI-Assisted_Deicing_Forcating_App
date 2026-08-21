@@ -1,0 +1,18 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run deicing API",
+      "type": "shell",
+      "command": "python -m uvicorn Yuva.api:app --reload",
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Run tests",
+      "type": "shell",
+      "command": "python -m unittest discover -s tests -p \"test_*.py\" -v",
+      "problemMatcher": []
+    }
+  ]
+}

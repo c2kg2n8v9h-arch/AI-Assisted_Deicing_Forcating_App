@@ -20,6 +20,21 @@ Run the standard-library unit tests with:
 python -m unittest discover -s tests -p "test_*.py" -v
 ```
 
+## Start the backend API
+
+Install dependencies and start the local FastAPI server:
+
+```bash
+python -m pip install -r requirements.txt
+python -m uvicorn Yuva.api:app --reload
+```
+
+API endpoints:
+
+- `GET http://127.0.0.1:8000/health`
+- `GET http://127.0.0.1:8000/operations`
+- Interactive API documentation: `http://127.0.0.1:8000/docs`
+
 ## Structure
 
 ```text
@@ -27,6 +42,8 @@ AI Gen code/
 ├── Yuva/Deicing.py           # Application and domain logic
 ├── Yuva/__init__.py          # Python package marker
 ├── data/operations_data.json # Runtime input data
+├── Yuva/api.py               # FastAPI backend
+├── frontend/                 # Operations dashboard assets
 ├── docs/                     # Guides and data documentation
 ├── tests/                    # Unit tests
 ├── .vscode/                  # Optional VS Code configuration
@@ -34,4 +51,4 @@ AI Gen code/
 └── pyproject.toml            # Project metadata
 ```
 
-This project currently uses only Python's standard library.
+The command-line engine uses Python's standard library. The API layer uses FastAPI and Uvicorn.

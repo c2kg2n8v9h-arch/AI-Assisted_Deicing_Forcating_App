@@ -14,11 +14,23 @@ python "Yuva/Deicing.py"
 
 The program prints truck dispatch recommendations, operational alerts, and shift summary KPIs.
 
+## Backend API
+
+Install the API dependencies and start the local server:
+
+```bash
+python -m pip install -r requirements.txt
+python -m uvicorn Yuva.api:app --reload
+```
+
+The API provides `/health` and `/operations`. FastAPI's interactive documentation is available at `/docs`.
+
 ## Project layout
 
 ```text
 AI Gen code/
-├── Yuva/Deicing.py          # Main Python application
+├── Yuva/Deicing.py          # Domain logic and command-line application
+├── Yuva/api.py              # FastAPI backend
 ├── data/operations_data.json # Sample operational data
 ├── docs/                    # Project documentation
 ├── tests/                   # Test files

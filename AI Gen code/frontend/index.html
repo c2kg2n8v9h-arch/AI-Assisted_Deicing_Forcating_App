@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#102a43" />
+    <title>Deicing Operations Control</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div class="brand-lockup">
+          <div class="brand-mark" aria-hidden="true">✦</div>
+          <div>
+            <p class="eyebrow">Airport operations / winter desk</p>
+            <h1>Deicing control</h1>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <span class="live-indicator"><span></span> Live model</span>
+          <button id="refresh-button" class="refresh-button" type="button">Refresh data</button>
+        </div>
+      </header>
+
+      <section class="hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">Shift overview</p>
+          <h2>Keep departures moving<br /><em>through the weather.</em></h2>
+          <p class="hero-note">Priority decisions are recalculated from the current weather feed, departure window, passenger impact, and aircraft treatment time.</p>
+          <p class="timestamp">Last model run <strong id="generated-at">Loading...</strong></p>
+        </div>
+        <div class="weather-panel">
+          <div class="panel-label">Weather feed <span id="weather-severity">--</span></div>
+          <div class="temperature"><span id="temperature">--</span><sup>°C</sup></div>
+          <div class="weather-meta"><span id="precipitation">--</span><span id="snow-rate">-- cm/hr</span><span id="wind-speed">-- kts wind</span></div>
+          <div class="weather-rule"><span></span></div>
+        </div>
+      </section>
+
+      <section class="metric-grid" aria-label="Shift metrics">
+        <article class="metric-card accent-coral"><p>Flights monitored</p><strong id="flight-count">--</strong><span>in current shift</span></article>
+        <article class="metric-card accent-teal"><p>Deicing required</p><strong id="deicing-count">--</strong><span>aircraft flagged</span></article>
+        <article class="metric-card accent-gold"><p>Truck utilization</p><strong id="utilization">--</strong><span>available fleet</span></article>
+        <article class="metric-card accent-blue"><p>Average treatment</p><strong id="avg-duration">--</strong><span>predicted minutes</span></article>
+      </section>
+
+      <section class="content-grid">
+        <div class="panel flight-panel">
+          <div class="section-heading"><div><p class="eyebrow">Decision queue</p><h3>Flight priorities</h3></div><span id="queue-status" class="status-chip">Loading</span></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Flight</th><th>Departure</th><th>Gate</th><th>Priority</th><th>Assigned unit</th></tr></thead>
+              <tbody id="flight-rows"><tr><td colspan="5" class="empty-state">Loading operations...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <aside class="side-column">
+          <div class="panel truck-panel"><div class="section-heading"><div><p class="eyebrow">Equipment</p><h3>Truck fleet</h3></div></div><div id="truck-list" class="truck-list"></div></div>
+          <div class="panel alert-panel"><div class="section-heading"><div><p class="eyebrow">Watch list</p><h3>Operational alerts</h3></div></div><div id="alert-list" class="alert-list"></div></div>
+        </aside>
+      </section>
+    </main>
+    <div id="toast" class="toast" role="status"></div>
+    <script src="/app.js" defer></script>
+  </body>
+</html>
