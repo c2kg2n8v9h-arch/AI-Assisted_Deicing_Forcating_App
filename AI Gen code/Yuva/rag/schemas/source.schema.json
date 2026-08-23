@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yuva.example/schemas/rag/source.schema.json",
+  "title": "Yuva RAG source manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "source_id",
+    "title",
+    "authority",
+    "jurisdiction",
+    "version",
+    "effective_from",
+    "classification",
+    "checksum_sha256",
+    "approval_status"
+  ],
+  "properties": {
+    "source_id": { "type": "string", "minLength": 1 },
+    "title": { "type": "string", "minLength": 1 },
+    "authority": { "type": "string", "minLength": 1 },
+    "jurisdiction": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+    "organization_id": { "type": ["string", "null"] },
+    "station_codes": { "type": "array", "items": { "type": "string" } },
+    "version": { "type": "string", "minLength": 1 },
+    "effective_from": { "type": "string", "format": "date" },
+    "effective_until": { "type": ["string", "null"], "format": "date" },
+    "source_url": { "type": ["string", "null"], "format": "uri" },
+    "classification": {
+      "enum": ["public", "internal", "confidential", "restricted"]
+    },
+    "checksum_sha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+    "approval_status": { "enum": ["pending", "approved", "rejected", "superseded"] },
+    "approved_by": { "type": ["string", "null"] },
+    "approved_at": { "type": ["string", "null"], "format": "date-time" }
+  }
+}

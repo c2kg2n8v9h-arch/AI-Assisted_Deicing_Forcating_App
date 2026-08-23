@@ -1,0 +1,50 @@
+version: 1
+
+environment: development
+
+collections:
+  regulations:
+    enabled: true
+    required_metadata:
+      - source_id
+      - title
+      - authority
+      - jurisdiction
+      - effective_from
+      - classification
+      - checksum_sha256
+  station_sops:
+    enabled: true
+    required_metadata:
+      - source_id
+      - title
+      - organization_id
+      - station_codes
+      - effective_from
+      - classification
+      - checksum_sha256
+
+chunking:
+  strategy: heading_aware
+  target_tokens: 700
+  overlap_tokens: 100
+
+retrieval:
+  mode: hybrid
+  candidate_count: 30
+  rerank_count: 8
+  answer_context_count: 5
+  require_authorization_filter: true
+  require_effective_source: true
+  require_citations: true
+  abstain_without_evidence: true
+
+storage:
+  processed_path: rag/data/processed
+  index_path: rag/data/indexes
+
+security:
+  reject_unclassified_sources: true
+  log_retrieved_chunk_ids: true
+  log_source_versions: true
+  redact_sensitive_log_fields: true

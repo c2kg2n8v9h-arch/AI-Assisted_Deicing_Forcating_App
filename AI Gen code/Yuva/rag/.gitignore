@@ -1,0 +1,14 @@
+# Generated, reproducible, or potentially large artifacts
+data/processed/*
+!data/processed/.gitkeep
+data/indexes/*
+!data/indexes/.gitkeep
+evaluation/results/*
+!evaluation/results/.gitkeep
+
+# Local environment and secrets
+.env
+*.local.yaml
+*.key
+*.pem
+

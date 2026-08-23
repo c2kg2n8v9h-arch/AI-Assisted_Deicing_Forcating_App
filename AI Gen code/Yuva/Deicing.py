@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 import json
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 
 class WeatherSeverity(Enum):
@@ -212,6 +212,316 @@ class OperationsDashboard:
             "Equipment Utilization": f"{(active_trucks / max(1, len(trucks))) * 100:.1f}%",
             "Avg Predicted Deice Time": f"{avg_duration:.1f} mins",
         }
+
+
+class DecisionSupportEngine:
+    """Advisory planning only; never confirms cleanliness or departure authority."""
+
+    DISCLAIMER = (
+        "Advisory estimate only. Requires review by authorized operations personnel; "
+        "it does not declare an aircraft clean, override an approved procedure, "
+        "calculate an operationally binding result, or authorize departure."
+    )
+
+    @staticmethod
+    def estimate_service_time(
+        flight: Flight, weather: WeatherData
+    ) -> Dict[str, Any]:
+        """Return a transparent range instead of presenting a point estimate as fact."""
+        aircraft_multiplier = DeicingAIEngine.AIRCRAFT_SIZE_MULTIPLIERS.get(
+            flight.aircraft_type
+        )
+        known_aircraft = aircraft_multiplier is not None
+        aircraft_multiplier = aircraft_multiplier or 1.0
+        severity_multiplier = 1 + (weather.severity.value * 0.35)
+        point_estimate = round(10.0 * aircraft_multiplier * severity_multiplier, 1)
+
+        # Wider bands communicate uncertainty for severe weather and unknown types.
+        uncertainty = 0.20 + ((weather.severity.value - 1) * 0.04)
+        if not known_aircraft:
+            uncertainty += 0.15
+        low = round(max(1.0, point_estimate * (1 - uncertainty)), 1)
+        high = round(point_estimate * (1 + uncertainty), 1)
+        confidence = "medium" if known_aircraft else "low"
+        if weather.severity in (
+            WeatherSeverity.HEAVY_SNOW,
+            WeatherSeverity.FREEZING_RAIN,
+        ):
+            confidence = "low"
+
+        return {
+            "flight_id": flight.flight_id,
+            "estimated_minutes": point_estimate,
+            "range_minutes": {"low": low, "high": high},
+            "confidence": confidence,
+            "factors": {
+                "aircraft_type": flight.aircraft_type,
+                "aircraft_type_known": known_aircraft,
+                "weather_severity": weather.severity.name,
+                "snow_rate_cm_hr": weather.snow_rate_cm_hr,
+                "wind_speed_kts": weather.wind_speed_kts,
+                "weather_observation_time": None,
+                "weather_freshness": "unavailable",
+            },
+            "requires_human_approval": True,
+            "disclaimer": DecisionSupportEngine.DISCLAIMER,
+        }
+
+    @staticmethod
+    def forecast_queue(
+        flights: List[Flight],
+        trucks: List[DeicingTruck],
+        weather: WeatherData,
+        current_time: datetime,
+    ) -> Dict[str, Any]:
+        """Forecast queue wait/completion with deterministic list scheduling."""
+        eligible_trucks = [
+            truck
+            for truck in trucks
+            if truck.is_available and truck.fluid_capacity_pct >= 20.0
+        ]
+        pending = [
+            flight
+            for flight in flights
+            if flight.deice_required
+            and flight.status
+            in (FlightStatus.SCHEDULED, FlightStatus.QUEUED_FOR_DEICE)
+        ]
+        pending.sort(
+            key=lambda flight: (
+                -flight.deice_priority_score,
+                flight.scheduled_departure,
+                flight.flight_id,
+            )
+        )
+
+        if not eligible_trucks:
+            return {
+                "queue_length": len(pending),
+                "eligible_truck_count": 0,
+                "estimated_clear_time": None,
+                "flights": [],
+                "capacity_warning": bool(pending),
+                "requires_human_approval": True,
+                "disclaimer": DecisionSupportEngine.DISCLAIMER,
+            }
+
+        next_available = {
+            truck.truck_id: current_time for truck in eligible_trucks
+        }
+        forecast = []
+        for position, flight in enumerate(pending, start=1):
+            truck_id = min(
+                next_available,
+                key=lambda candidate: (next_available[candidate], candidate),
+            )
+            start_time = next_available[truck_id]
+            estimate = DecisionSupportEngine.estimate_service_time(flight, weather)
+            completion_time = start_time + timedelta(
+                minutes=estimate["estimated_minutes"]
+            )
+            next_available[truck_id] = completion_time
+            wait_minutes = max(
+                0.0, (start_time - current_time).total_seconds() / 60.0
+            )
+            departure_margin = (
+                flight.scheduled_departure - completion_time
+            ).total_seconds() / 60.0
+            forecast.append(
+                {
+                    "queue_position": position,
+                    "flight_id": flight.flight_id,
+                    "candidate_truck_id": truck_id,
+                    "estimated_start": start_time.isoformat(),
+                    "estimated_completion": completion_time.isoformat(),
+                    "estimated_wait_minutes": round(wait_minutes, 1),
+                    "estimated_departure_margin_minutes": round(departure_margin, 1),
+                    "service_time": estimate,
+                }
+            )
+
+        clear_time = max(next_available.values()) if forecast else current_time
+        return {
+            "queue_length": len(pending),
+            "eligible_truck_count": len(eligible_trucks),
+            "estimated_clear_time": clear_time.isoformat(),
+            "flights": forecast,
+            "capacity_warning": len(pending) > len(eligible_trucks),
+            "input_quality": {
+                "weather_freshness": "unavailable",
+                "warning": "Weather observation time is not present in the input model.",
+            },
+            "requires_human_approval": True,
+            "disclaimer": DecisionSupportEngine.DISCLAIMER,
+        }
+
+    @staticmethod
+    def detect_anomalies(
+        flights: List[Flight],
+        trucks: List[DeicingTruck],
+        weather: WeatherData,
+        current_time: datetime,
+    ) -> List[Dict[str, Any]]:
+        """Detect explainable data and capacity anomalies without changing state."""
+        anomalies: List[Dict[str, Any]] = []
+        seen_flights = set()
+        for flight in flights:
+            if flight.flight_id in seen_flights:
+                anomalies.append(
+                    {
+                        "code": "DUPLICATE_FLIGHT_ID",
+                        "severity": "high",
+                        "entity_id": flight.flight_id,
+                        "message": "Duplicate flight identifier in the active dataset.",
+                    }
+                )
+            seen_flights.add(flight.flight_id)
+            if flight.passengers_count < 0:
+                anomalies.append(
+                    {
+                        "code": "INVALID_PASSENGER_COUNT",
+                        "severity": "medium",
+                        "entity_id": flight.flight_id,
+                        "message": "Passenger count is negative and requires correction.",
+                    }
+                )
+            if flight.aircraft_type not in DeicingAIEngine.AIRCRAFT_SIZE_MULTIPLIERS:
+                anomalies.append(
+                    {
+                        "code": "UNKNOWN_AIRCRAFT_TYPE",
+                        "severity": "medium",
+                        "entity_id": flight.flight_id,
+                        "message": "No validated service-time profile exists for this aircraft type.",
+                    }
+                )
+            if (
+                flight.deice_required
+                and flight.scheduled_departure < current_time
+                and flight.status not in (FlightStatus.DEICED,)
+            ):
+                anomalies.append(
+                    {
+                        "code": "PAST_DEPARTURE_PENDING_TREATMENT",
+                        "severity": "high",
+                        "entity_id": flight.flight_id,
+                        "message": "Flight is past scheduled departure and remains pending treatment.",
+                    }
+                )
+
+        seen_trucks = set()
+        for truck in trucks:
+            if truck.truck_id in seen_trucks:
+                anomalies.append(
+                    {
+                        "code": "DUPLICATE_TRUCK_ID",
+                        "severity": "high",
+                        "entity_id": truck.truck_id,
+                        "message": "Duplicate truck identifier in the active dataset.",
+                    }
+                )
+            seen_trucks.add(truck.truck_id)
+            if not 0.0 <= truck.fluid_capacity_pct <= 100.0:
+                anomalies.append(
+                    {
+                        "code": "INVALID_FLUID_LEVEL",
+                        "severity": "high",
+                        "entity_id": truck.truck_id,
+                        "message": "Truck fluid level is outside the valid 0-100 percent range.",
+                    }
+                )
+            elif truck.fluid_capacity_pct < 20.0:
+                anomalies.append(
+                    {
+                        "code": "LOW_FLUID_CAPACITY",
+                        "severity": "medium",
+                        "entity_id": truck.truck_id,
+                        "message": "Truck is below the advisory dispatch fluid threshold.",
+                    }
+                )
+
+        pending_count = sum(
+            1
+            for flight in flights
+            if flight.deice_required
+            and flight.status
+            in (FlightStatus.SCHEDULED, FlightStatus.QUEUED_FOR_DEICE)
+        )
+        eligible_count = sum(
+            1
+            for truck in trucks
+            if truck.is_available and truck.fluid_capacity_pct >= 20.0
+        )
+        if pending_count and not eligible_count:
+            anomalies.append(
+                {
+                    "code": "NO_ELIGIBLE_TRUCK_CAPACITY",
+                    "severity": "critical",
+                    "entity_id": "fleet",
+                    "message": "Flights require treatment but no available truck meets the advisory fluid threshold.",
+                }
+            )
+        if weather.wind_speed_kts < 0 or weather.snow_rate_cm_hr < 0:
+            anomalies.append(
+                {
+                    "code": "INVALID_WEATHER_VALUE",
+                    "severity": "high",
+                    "entity_id": "weather",
+                    "message": "A weather measurement is negative and requires source validation.",
+                }
+            )
+        anomalies.append(
+            {
+                "code": "WEATHER_FRESHNESS_UNAVAILABLE",
+                "severity": "medium",
+                "entity_id": "weather",
+                "message": "Weather observation time is absent; freshness must be verified before operational use.",
+            }
+        )
+
+        for anomaly in anomalies:
+            anomaly["detected_at"] = current_time.isoformat()
+            anomaly["requires_human_review"] = True
+            anomaly["disclaimer"] = DecisionSupportEngine.DISCLAIMER
+        return anomalies
+
+    @staticmethod
+    def recommend_resources(
+        flights: List[Flight],
+        trucks: List[DeicingTruck],
+        weather: WeatherData,
+        current_time: datetime,
+    ) -> List[Dict[str, Any]]:
+        """Return non-mutating candidate assignments for dispatcher approval."""
+        queue = DecisionSupportEngine.forecast_queue(
+            flights, trucks, weather, current_time
+        )
+        recommendations = []
+        for item in queue["flights"]:
+            flight = next(
+                candidate
+                for candidate in flights
+                if candidate.flight_id == item["flight_id"]
+            )
+            reasons = [
+                f"Priority score {flight.deice_priority_score}",
+                f"Estimated wait {item['estimated_wait_minutes']} minutes",
+                f"Estimated departure margin {item['estimated_departure_margin_minutes']} minutes",
+            ]
+            recommendations.append(
+                {
+                    "recommendation_id": (
+                        f"{flight.flight_id}:{item['candidate_truck_id']}:{item['queue_position']}"
+                    ),
+                    "flight_id": flight.flight_id,
+                    "candidate_truck_id": item["candidate_truck_id"],
+                    "queue_position": item["queue_position"],
+                    "reasons": reasons,
+                    "requires_dispatcher_approval": True,
+                    "status": "advisory",
+                    "disclaimer": DecisionSupportEngine.DISCLAIMER,
+                }
+            )
+        return recommendations
 
 
 def load_operations_data(data_path: Path) -> tuple[WeatherData, List[Flight], List[DeicingTruck]]:

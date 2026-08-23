@@ -8,6 +8,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.staticfiles import StaticFiles
 
 from .Deicing import (
+    DecisionSupportEngine,
     DeicingAIEngine,
     OptimizationEngine,
     OperationsDashboard,
@@ -60,8 +61,15 @@ def build_operations_report(station_code: str = "DEN") -> dict[str, Any]:
             ai_engine.estimate_deicing_duration(flight, weather)
             ai_engine.calculate_priority_score(flight, current_time)
 
-    recommendations = OptimizationEngine.dispatch_trucks(
-        flights, trucks, current_time
+    # Read reports provide recommendations only and never mutate assignments.
+    recommendations = DecisionSupportEngine.recommend_resources(
+        flights, trucks, weather, current_time
+    )
+    queue_forecast = DecisionSupportEngine.forecast_queue(
+        flights, trucks, weather, current_time
+    )
+    anomalies = DecisionSupportEngine.detect_anomalies(
+        flights, trucks, weather, current_time
     )
     alerts = OperationsDashboard.check_operational_alerts(flights, current_time)
     summary = OperationsDashboard.generate_shift_summary(flights, trucks)
@@ -139,6 +147,13 @@ def build_operations_report(station_code: str = "DEN") -> dict[str, Any]:
             for truck in trucks
         ],
         "recommendations": recommendations,
+        "decision_support": {
+            "mode": "advisory",
+            "requires_human_approval": True,
+            "queue_forecast": queue_forecast,
+            "anomalies": anomalies,
+            "limitations": DecisionSupportEngine.DISCLAIMER,
+        },
         "alerts": alerts,
         "summary": summary,
     }
@@ -164,6 +179,8 @@ def dispatch_operations(
     station: str = Query("DEN", min_length=3, max_length=3),
     _user: User = Depends(require_roles(Role.DISPATCHER, Role.ADMIN)),
 ) -> dict[str, Any]:
+    # This endpoint currently returns an advisory plan. A future state-changing
+    # dispatch action must require explicit recommendation approval and audit it.
     return build_operations_report(station)
 
 

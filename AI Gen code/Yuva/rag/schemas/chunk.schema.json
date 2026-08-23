@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yuva.example/schemas/rag/chunk.schema.json",
+  "title": "Yuva RAG chunk",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "chunk_id",
+    "source_id",
+    "source_version",
+    "content",
+    "locator",
+    "classification",
+    "checksum_sha256"
+  ],
+  "properties": {
+    "chunk_id": { "type": "string", "minLength": 1 },
+    "source_id": { "type": "string", "minLength": 1 },
+    "source_version": { "type": "string", "minLength": 1 },
+    "content": { "type": "string", "minLength": 1 },
+    "locator": { "type": "string", "minLength": 1 },
+    "heading_path": { "type": "array", "items": { "type": "string" } },
+    "jurisdiction": { "type": "array", "items": { "type": "string" } },
+    "organization_id": { "type": ["string", "null"] },
+    "station_codes": { "type": "array", "items": { "type": "string" } },
+    "effective_from": { "type": ["string", "null"], "format": "date" },
+    "effective_until": { "type": ["string", "null"], "format": "date" },
+    "classification": {
+      "enum": ["public", "internal", "confidential", "restricted"]
+    },
+    "checksum_sha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" }
+  }
+}
