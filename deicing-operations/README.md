@@ -88,7 +88,7 @@ All queue, duration, anomaly, and resource outputs are advisory and require revi
 ## Structure
 
 ```text
-AI Gen code/
+deicing-operations/
 ├── Yuva/Deicing.py           # Application and domain logic
 ├── Yuva/__init__.py          # Python package marker
 ├── data/operations_data.json # Runtime input data

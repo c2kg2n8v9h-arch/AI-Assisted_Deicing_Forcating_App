@@ -75,7 +75,7 @@ The system shall:
 - Flight priority scoring.
 - Deicing truck assignment and fluid-capacity filtering.
 - Operational alerts and KPI summary.
-- FastAPI `/operations` and `/operations/dispatch` endpoints.
+- FastAPI `/operations`, `/operations/recommendations`, and advisory decision endpoints.
 - Viewer, dispatcher, and admin API roles.
 - Dashboard with weather, flight, truck, KPI, and alert views.
 - Mock operational data and Playwright browser tests.

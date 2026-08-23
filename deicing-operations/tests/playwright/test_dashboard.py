@@ -110,7 +110,9 @@ def test_refresh_button_updates_dashboard(page: Page, application_url: str):
 
     expect(page.locator("#toast")).to_have_text("Operations data refreshed")
     expect(page.locator("#toast")).to_have_class(re.compile(r"\bvisible\b"))
-    expect(page.locator("#queue-status")).to_contain_text("units assigned")
+    expect(page.locator("#queue-status")).to_contain_text(
+        "recommendations pending review"
+    )
 
 
 def test_station_selection_updates_station_context(page: Page, application_url: str):

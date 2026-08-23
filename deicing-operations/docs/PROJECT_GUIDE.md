@@ -44,7 +44,7 @@ Use [.env.example](../.env.example) as the configuration template. Keep the real
 ## Project layout
 
 ```text
-AI Gen code/
+deicing-operations/
 ├── Yuva/Deicing.py          # Domain logic and command-line application
 ├── Yuva/api.py              # FastAPI backend
 ├── data/operations_data.json # Sample operational data

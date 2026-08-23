@@ -2,7 +2,7 @@
 
 ## Primary product: Yuva aircraft deicing
 
-The code under `AI Gen code/` is the primary Yuva product. It provides
+The code under `deicing-operations/` is the primary Yuva product. It provides
 advisory-only aircraft deicing queue forecasts, service-time ranges, anomaly
 detection, and resource recommendations. It must not declare an aircraft clean,
 override an approved procedure, produce an operationally binding result, or
@@ -22,7 +22,7 @@ orders, or the submodule's local RAG index.
 
 ## RAG ownership
 
-`AI Gen code/Yuva/rag` is the authoritative RAG contract for the deicing
+`deicing-operations/Yuva/rag` is the authoritative RAG contract for the deicing
 product. Its provenance, effective-date, jurisdiction, station, classification,
 and checksum requirements take precedence. The SPM RAG implementation remains
 development-only and is not approved for deicing documents.
