@@ -42,7 +42,10 @@ class SecurityTests(unittest.TestCase):
         self.assertEqual(error.exception.status_code, 503)
 
     def test_configured_api_key_resolves_to_role(self):
-        users = '[{"username":"dispatcher1","role":"dispatcher","api_key":"secret-key"}]'
+        users = (
+            '[{"username":"dispatcher1","role":"dispatcher",'
+            '"api_key":"secret-key","station_codes":["DEN"]}]'
+        )
         with patch.dict(os.environ, {"DEICING_USERS": users}):
             user = _find_user("secret-key")
             enabled = auth_enabled()
@@ -50,7 +53,7 @@ class SecurityTests(unittest.TestCase):
         self.assertTrue(enabled)
         self.assertIsNotNone(user)
         self.assertEqual(user.role, Role.DISPATCHER)
-        self.assertIn("operations:dispatch", user.permissions)
+        self.assertIn("recommendations:decide", user.permissions)
 
     def test_viewer_is_rejected_from_dispatch_permission(self):
         viewer = User("viewer1", Role.VIEWER, ROLE_PERMISSIONS[Role.VIEWER])

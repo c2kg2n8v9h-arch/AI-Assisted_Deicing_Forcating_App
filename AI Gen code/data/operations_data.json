@@ -9,56 +9,56 @@
     {
       "flight_id": "MOCK-FLT-001",
       "aircraft_type": "B777",
-      "scheduled_departure": "2026-08-20T23:37:00",
+      "departure_offset_min": 30,
       "gate": "B12",
       "passengers_count": 260
     },
     {
       "flight_id": "MOCK-FLT-002",
       "aircraft_type": "A320",
-      "scheduled_departure": "2026-08-20T23:27:00",
+      "departure_offset_min": 20,
       "gate": "C04",
       "passengers_count": 140
     },
     {
       "flight_id": "MOCK-FLT-003",
       "aircraft_type": "B737",
-      "scheduled_departure": "2026-08-21T00:17:00",
+      "departure_offset_min": 70,
       "gate": "A08",
       "passengers_count": 160
     },
     {
       "flight_id": "MOCK-FLT-004",
       "aircraft_type": "A330",
-      "scheduled_departure": "2026-08-21T00:42:00",
+      "departure_offset_min": 95,
       "gate": "D16",
       "passengers_count": 285
     },
     {
       "flight_id": "MOCK-FLT-005",
       "aircraft_type": "A320",
-      "scheduled_departure": "2026-08-21T01:05:00",
+      "departure_offset_min": 118,
       "gate": "B07",
       "passengers_count": 178
     },
     {
       "flight_id": "MOCK-FLT-006",
       "aircraft_type": "B747",
-      "scheduled_departure": "2026-08-21T01:28:00",
+      "departure_offset_min": 141,
       "gate": "E02",
       "passengers_count": 365
     },
     {
       "flight_id": "MOCK-FLT-007",
       "aircraft_type": "B737",
-      "scheduled_departure": "2026-08-21T01:50:00",
+      "departure_offset_min": 163,
       "gate": "C11",
       "passengers_count": 132
     },
     {
       "flight_id": "MOCK-FLT-008",
       "aircraft_type": "A320",
-      "scheduled_departure": "2026-08-21T02:15:00",
+      "departure_offset_min": 188,
       "gate": "A19",
       "passengers_count": 154
     }

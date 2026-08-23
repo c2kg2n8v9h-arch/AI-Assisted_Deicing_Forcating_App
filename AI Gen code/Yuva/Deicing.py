@@ -1,9 +1,9 @@
-from dataclasses import dataclass
-from datetime import datetime, timedelta
-from enum import Enum
 import json
+from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
+from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class WeatherSeverity(Enum):
@@ -12,6 +12,13 @@ class WeatherSeverity(Enum):
     MODERATE_SNOW = 3
     HEAVY_SNOW = 4
     FREEZING_RAIN = 5
+
+
+def _service_time_minutes(aircraft_type: str, severity: WeatherSeverity) -> float:
+    """Single deterministic prototype estimate used by all advisory callers."""
+    aircraft_multiplier = DeicingAIEngine.AIRCRAFT_SIZE_MULTIPLIERS.get(aircraft_type, 1.0)
+    severity_multiplier = 1 + ((severity.value - WeatherSeverity.CLEAR.value) * 0.35)
+    return round(10.0 * aircraft_multiplier * severity_multiplier, 1)
 
 
 class FlightStatus(Enum):
@@ -53,7 +60,7 @@ class Flight:
     deice_required: bool = False
     estimated_deice_duration_min: float = 0.0
     deice_priority_score: float = 0.0
-    assigned_truck_id: Optional[str] = None
+    assigned_truck_id: str | None = None
 
 
 @dataclass
@@ -62,7 +69,7 @@ class DeicingTruck:
     location_gate: str
     fluid_capacity_pct: float
     is_available: bool = True
-    assigned_flight_id: Optional[str] = None
+    assigned_flight_id: str | None = None
 
 
 class DeicingAIEngine:
@@ -78,37 +85,22 @@ class DeicingAIEngine:
 
     def predict_deicing_need(self, flight: Flight, weather: WeatherData) -> bool:
         """Determines if aircraft requires deicing based on weather telemetry."""
-        needs_deicing = (
-            weather.severity != WeatherSeverity.CLEAR
-            or weather.temperature_c <= 2.0
-        )
+        needs_deicing = weather.severity != WeatherSeverity.CLEAR or weather.temperature_c <= 2.0
         flight.deice_required = needs_deicing
         return needs_deicing
 
-    def estimate_deicing_duration(
-        self, flight: Flight, weather: WeatherData
-    ) -> float:
+    def estimate_deicing_duration(self, flight: Flight, weather: WeatherData) -> float:
         """Predicts deicing completion time based on weather severity and plane scale."""
-        base_duration = 10.0  # Base duration in minutes
-        size_mult = self.AIRCRAFT_SIZE_MULTIPLIERS.get(
-            flight.aircraft_type, 1.0
-        )
-        severity_mult = weather.severity.value * 0.35
-
-        est_duration = round(base_duration * size_mult * (1 + severity_mult), 1)
+        est_duration = _service_time_minutes(flight.aircraft_type, weather.severity)
         flight.estimated_deice_duration_min = est_duration
         return est_duration
 
-    def calculate_priority_score(
-        self, flight: Flight, current_time: datetime
-    ) -> float:
+    def calculate_priority_score(self, flight: Flight, current_time: datetime) -> float:
         """
         Generates operational risk score (Higher = Urgent Priority).
         Factors: Departure countdown, passenger count, and expected deice duration.
         """
-        mins_until_departure = (
-            flight.scheduled_departure - current_time
-        ).total_seconds() / 60.0
+        mins_until_departure = (flight.scheduled_departure - current_time).total_seconds() / 60.0
 
         urgency = max(0.0, (120.0 - mins_until_departure) / 120.0) * 50.0
         passenger_impact = (flight.passengers_count / 300.0) * 25.0
@@ -119,92 +111,30 @@ class DeicingAIEngine:
         return score
 
 
-class OptimizationEngine:
-    """Matches resources with high-risk flights and provides explainable recovery actions."""
-
-    @staticmethod
-    def dispatch_trucks(
-        flights: List[Flight],
-        trucks: List[DeicingTruck],
-        current_time: datetime,
-    ) -> List[Dict[str, str]]:
-        recommendations = []
-
-        # Filter pending flights needing deicing
-        pending = [
-            f
-            for f in flights
-            if f.deice_required
-            and f.status
-            in (FlightStatus.SCHEDULED, FlightStatus.QUEUED_FOR_DEICE)
-        ]
-        # Sort by AI priority score descending
-        pending.sort(key=lambda x: x.deice_priority_score, reverse=True)
-
-        available_trucks = [
-            t for t in trucks if t.is_available and t.fluid_capacity_pct >= 20.0
-        ]
-
-        for flight in pending:
-            if not available_trucks:
-                break
-
-            truck = available_trucks.pop(0)
-            truck.is_available = False
-            truck.assigned_flight_id = flight.flight_id
-
-            flight.assigned_truck_id = truck.truck_id
-            flight.status = FlightStatus.QUEUED_FOR_DEICE
-
-            recommendation = {
-                "flight_id": flight.flight_id,
-                "truck_id": truck.truck_id,
-                "priority_score": str(flight.deice_priority_score),
-                "reasoning": (
-                    f"Prioritized due to score {flight.deice_priority_score} "
-                    f"(Dep: {flight.scheduled_departure.strftime('%H:%M')}, "
-                    f"Est duration: {flight.estimated_deice_duration_min}m)."
-                ),
-            }
-            recommendations.append(recommendation)
-
-        return recommendations
-
-
 class OperationsDashboard:
     """Monitors active operations, flags bottleneck alerts, and produces shift reports."""
 
     @staticmethod
-    def check_operational_alerts(
-        flights: List[Flight], current_time: datetime
-    ) -> List[str]:
+    def check_operational_alerts(flights: list[Flight], current_time: datetime) -> list[str]:
         alerts = []
         for flight in flights:
             if flight.deice_required and not flight.assigned_truck_id:
-                mins_left = (
-                    flight.scheduled_departure - current_time
-                ).total_seconds() / 60.0
+                mins_left = (flight.scheduled_departure - current_time).total_seconds() / 60.0
                 if mins_left < (flight.estimated_deice_duration_min + 15):
                     alerts.append(
-                        f"CRITICAL RISK: Flight {flight.flight_id} (Gate {flight.gate}) departure in "
-                        f"{int(mins_left)}m exceeds available turnaround buffer without assigned truck."
+                        f"CRITICAL RISK: Flight {flight.flight_id} "
+                        f"(Gate {flight.gate}) departure in {int(mins_left)}m "
+                        "exceeds available turnaround buffer without assigned truck."
                     )
         return alerts
 
     @staticmethod
-    def generate_shift_summary(
-        flights: List[Flight], trucks: List[DeicingTruck]
-    ) -> Dict[str, str]:
+    def generate_shift_summary(flights: list[Flight], trucks: list[DeicingTruck]) -> dict[str, str]:
         deiced_count = sum(1 for f in flights if f.deice_required)
         active_trucks = sum(1 for t in trucks if not t.is_available)
-        avg_duration = (
-            sum(
-                f.estimated_deice_duration_min
-                for f in flights
-                if f.deice_required
-            )
-            / max(1, deiced_count)
-        )
+        avg_duration = sum(
+            f.estimated_deice_duration_min for f in flights if f.deice_required
+        ) / max(1, deiced_count)
 
         return {
             "Total Monitored Flights": str(len(flights)),
@@ -224,17 +154,10 @@ class DecisionSupportEngine:
     )
 
     @staticmethod
-    def estimate_service_time(
-        flight: Flight, weather: WeatherData
-    ) -> Dict[str, Any]:
+    def estimate_service_time(flight: Flight, weather: WeatherData) -> dict[str, Any]:
         """Return a transparent range instead of presenting a point estimate as fact."""
-        aircraft_multiplier = DeicingAIEngine.AIRCRAFT_SIZE_MULTIPLIERS.get(
-            flight.aircraft_type
-        )
-        known_aircraft = aircraft_multiplier is not None
-        aircraft_multiplier = aircraft_multiplier or 1.0
-        severity_multiplier = 1 + (weather.severity.value * 0.35)
-        point_estimate = round(10.0 * aircraft_multiplier * severity_multiplier, 1)
+        known_aircraft = flight.aircraft_type in DeicingAIEngine.AIRCRAFT_SIZE_MULTIPLIERS
+        point_estimate = _service_time_minutes(flight.aircraft_type, weather.severity)
 
         # Wider bands communicate uncertainty for severe weather and unknown types.
         uncertainty = 0.20 + ((weather.severity.value - 1) * 0.04)
@@ -269,23 +192,20 @@ class DecisionSupportEngine:
 
     @staticmethod
     def forecast_queue(
-        flights: List[Flight],
-        trucks: List[DeicingTruck],
+        flights: list[Flight],
+        trucks: list[DeicingTruck],
         weather: WeatherData,
         current_time: datetime,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Forecast queue wait/completion with deterministic list scheduling."""
         eligible_trucks = [
-            truck
-            for truck in trucks
-            if truck.is_available and truck.fluid_capacity_pct >= 20.0
+            truck for truck in trucks if truck.is_available and truck.fluid_capacity_pct >= 20.0
         ]
         pending = [
             flight
             for flight in flights
             if flight.deice_required
-            and flight.status
-            in (FlightStatus.SCHEDULED, FlightStatus.QUEUED_FOR_DEICE)
+            and flight.status in (FlightStatus.SCHEDULED, FlightStatus.QUEUED_FOR_DEICE)
         ]
         pending.sort(
             key=lambda flight: (
@@ -306,9 +226,7 @@ class DecisionSupportEngine:
                 "disclaimer": DecisionSupportEngine.DISCLAIMER,
             }
 
-        next_available = {
-            truck.truck_id: current_time for truck in eligible_trucks
-        }
+        next_available = {truck.truck_id: current_time for truck in eligible_trucks}
         forecast = []
         for position, flight in enumerate(pending, start=1):
             truck_id = min(
@@ -317,16 +235,10 @@ class DecisionSupportEngine:
             )
             start_time = next_available[truck_id]
             estimate = DecisionSupportEngine.estimate_service_time(flight, weather)
-            completion_time = start_time + timedelta(
-                minutes=estimate["estimated_minutes"]
-            )
+            completion_time = start_time + timedelta(minutes=estimate["estimated_minutes"])
             next_available[truck_id] = completion_time
-            wait_minutes = max(
-                0.0, (start_time - current_time).total_seconds() / 60.0
-            )
-            departure_margin = (
-                flight.scheduled_departure - completion_time
-            ).total_seconds() / 60.0
+            wait_minutes = max(0.0, (start_time - current_time).total_seconds() / 60.0)
+            departure_margin = (flight.scheduled_departure - completion_time).total_seconds() / 60.0
             forecast.append(
                 {
                     "queue_position": position,
@@ -357,13 +269,13 @@ class DecisionSupportEngine:
 
     @staticmethod
     def detect_anomalies(
-        flights: List[Flight],
-        trucks: List[DeicingTruck],
+        flights: list[Flight],
+        trucks: list[DeicingTruck],
         weather: WeatherData,
         current_time: datetime,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Detect explainable data and capacity anomalies without changing state."""
-        anomalies: List[Dict[str, Any]] = []
+        anomalies: list[dict[str, Any]] = []
         seen_flights = set()
         for flight in flights:
             if flight.flight_id in seen_flights:
@@ -391,7 +303,9 @@ class DecisionSupportEngine:
                         "code": "UNKNOWN_AIRCRAFT_TYPE",
                         "severity": "medium",
                         "entity_id": flight.flight_id,
-                        "message": "No validated service-time profile exists for this aircraft type.",
+                        "message": (
+                            "No validated service-time profile exists for this aircraft type."
+                        ),
                     }
                 )
             if (
@@ -404,7 +318,9 @@ class DecisionSupportEngine:
                         "code": "PAST_DEPARTURE_PENDING_TREATMENT",
                         "severity": "high",
                         "entity_id": flight.flight_id,
-                        "message": "Flight is past scheduled departure and remains pending treatment.",
+                        "message": (
+                            "Flight is past scheduled departure and remains pending treatment."
+                        ),
                     }
                 )
 
@@ -443,13 +359,10 @@ class DecisionSupportEngine:
             1
             for flight in flights
             if flight.deice_required
-            and flight.status
-            in (FlightStatus.SCHEDULED, FlightStatus.QUEUED_FOR_DEICE)
+            and flight.status in (FlightStatus.SCHEDULED, FlightStatus.QUEUED_FOR_DEICE)
         )
         eligible_count = sum(
-            1
-            for truck in trucks
-            if truck.is_available and truck.fluid_capacity_pct >= 20.0
+            1 for truck in trucks if truck.is_available and truck.fluid_capacity_pct >= 20.0
         )
         if pending_count and not eligible_count:
             anomalies.append(
@@ -457,7 +370,10 @@ class DecisionSupportEngine:
                     "code": "NO_ELIGIBLE_TRUCK_CAPACITY",
                     "severity": "critical",
                     "entity_id": "fleet",
-                    "message": "Flights require treatment but no available truck meets the advisory fluid threshold.",
+                    "message": (
+                        "Flights require treatment but no available truck meets "
+                        "the advisory fluid threshold."
+                    ),
                 }
             )
         if weather.wind_speed_kts < 0 or weather.snow_rate_cm_hr < 0:
@@ -474,7 +390,10 @@ class DecisionSupportEngine:
                 "code": "WEATHER_FRESHNESS_UNAVAILABLE",
                 "severity": "medium",
                 "entity_id": "weather",
-                "message": "Weather observation time is absent; freshness must be verified before operational use.",
+                "message": (
+                    "Weather observation time is absent; freshness must be "
+                    "verified before operational use."
+                ),
             }
         )
 
@@ -486,21 +405,17 @@ class DecisionSupportEngine:
 
     @staticmethod
     def recommend_resources(
-        flights: List[Flight],
-        trucks: List[DeicingTruck],
+        flights: list[Flight],
+        trucks: list[DeicingTruck],
         weather: WeatherData,
         current_time: datetime,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Return non-mutating candidate assignments for dispatcher approval."""
-        queue = DecisionSupportEngine.forecast_queue(
-            flights, trucks, weather, current_time
-        )
+        queue = DecisionSupportEngine.forecast_queue(flights, trucks, weather, current_time)
         recommendations = []
         for item in queue["flights"]:
             flight = next(
-                candidate
-                for candidate in flights
-                if candidate.flight_id == item["flight_id"]
+                candidate for candidate in flights if candidate.flight_id == item["flight_id"]
             )
             reasons = [
                 f"Priority score {flight.deice_priority_score}",
@@ -524,24 +439,32 @@ class DecisionSupportEngine:
         return recommendations
 
 
-def load_operations_data(data_path: Path) -> tuple[WeatherData, List[Flight], List[DeicingTruck]]:
+def load_operations_data(
+    data_path: Path, reference_time: datetime | None = None
+) -> tuple[WeatherData, list[Flight], list[DeicingTruck]]:
     """Load weather, flight, and truck input data from a JSON file."""
     with data_path.open(encoding="utf-8") as data_file:
         data = json.load(data_file)
 
     weather_data = WeatherData(**data["weather"])
-    flights = [
-        Flight(
-            flight_id=flight["flight_id"],
-            aircraft_type=flight["aircraft_type"],
-            scheduled_departure=datetime.fromisoformat(
-                flight["scheduled_departure"]
-            ),
-            gate=flight["gate"],
-            passengers_count=flight["passengers_count"],
+    scenario_time = reference_time or datetime.now(UTC)
+    flights = []
+    for flight in data["flights"]:
+        if "departure_offset_min" in flight:
+            departure = scenario_time + timedelta(minutes=float(flight["departure_offset_min"]))
+        else:
+            departure = datetime.fromisoformat(flight["scheduled_departure"])
+            if departure.tzinfo is None and scenario_time.tzinfo is not None:
+                departure = departure.replace(tzinfo=UTC)
+        flights.append(
+            Flight(
+                flight_id=flight["flight_id"],
+                aircraft_type=flight["aircraft_type"],
+                scheduled_departure=departure,
+                gate=flight["gate"],
+                passengers_count=flight["passengers_count"],
+            )
         )
-        for flight in data["flights"]
-    ]
     trucks = [DeicingTruck(**truck) for truck in data["trucks"]]
     return weather_data, flights, trucks
 
@@ -550,12 +473,12 @@ def load_operations_data(data_path: Path) -> tuple[WeatherData, List[Flight], Li
 # Execution & Verification Workflow
 # ==========================================
 if __name__ == "__main__":
-    now = datetime.now()
+    now = datetime.now(UTC)
     project_root = Path(__file__).resolve().parent.parent
 
     # 1. Weather Data Feed
     weather, flights, trucks = load_operations_data(
-        project_root / "data" / "operations_data.json"
+        project_root / "data" / "operations_data.json", reference_time=now
     )
 
     # 3. AI Prediction Pipeline
@@ -565,8 +488,8 @@ if __name__ == "__main__":
             ai_engine.estimate_deicing_duration(f, weather)
             ai_engine.calculate_priority_score(f, now)
 
-    # 4. Optimization & Recommendation Dispatch
-    dispatch_plan = OptimizationEngine.dispatch_trucks(flights, trucks, now)
+    # 4. Advisory resource recommendations; no assignment state is changed.
+    dispatch_plan = DecisionSupportEngine.recommend_resources(flights, trucks, weather, now)
 
     # 5. Dashboard Output & Alerts
     alerts = OperationsDashboard.check_operational_alerts(flights, now)
@@ -575,8 +498,11 @@ if __name__ == "__main__":
     # Display Results
     print("--- AI DISPATCH RECOMMENDATIONS ---")
     for plan in dispatch_plan:
-        print(f"[{plan['flight_id']}] -> Assigned {plan['truck_id']}")
-        print(f"  Reasoning: {plan['reasoning']}")
+        print(
+            f"[{plan['flight_id']}] -> Recommend {plan['candidate_truck_id']} "
+            "(dispatcher approval required)"
+        )
+        print(f"  Reasoning: {'; '.join(plan['reasons'])}")
 
     print("\n--- OPERATIONAL ALERTS ---")
     for alert in alerts:

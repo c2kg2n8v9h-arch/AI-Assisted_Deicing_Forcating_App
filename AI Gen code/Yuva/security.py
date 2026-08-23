@@ -1,9 +1,10 @@
 import json
 import os
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
 from secrets import compare_digest
-from typing import Callable
+from typing import Any
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -17,8 +18,8 @@ class Role(str, Enum):
 
 ROLE_PERMISSIONS = {
     Role.VIEWER: frozenset({"operations:read"}),
-    Role.DISPATCHER: frozenset({"operations:read", "operations:dispatch"}),
-    Role.ADMIN: frozenset({"operations:read", "operations:dispatch", "users:manage"}),
+    Role.DISPATCHER: frozenset({"operations:read", "recommendations:decide"}),
+    Role.ADMIN: frozenset({"operations:read", "recommendations:decide", "users:manage"}),
 }
 
 
@@ -27,12 +28,13 @@ class User:
     username: str
     role: Role
     permissions: frozenset[str]
+    station_codes: frozenset[str] = frozenset({"*"})
 
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
-def _configured_users() -> list[dict[str, str]]:
+def _configured_users() -> list[dict[str, Any]]:
     raw_users = os.getenv("DEICING_USERS", "")
     if not raw_users:
         return []
@@ -65,12 +67,16 @@ def _find_user(api_key: str) -> User | None:
             continue
         try:
             role = Role(configured_user["role"])
-        except (KeyError, ValueError):
-            raise RuntimeError("Each configured user must have a valid role")
+        except (KeyError, ValueError) as error:
+            raise RuntimeError("Each configured user must have a valid role") from error
+        station_codes = configured_user.get("station_codes")
+        if not isinstance(station_codes, list) or not station_codes:
+            raise RuntimeError("Each configured user must have a non-empty station_codes list")
         return User(
             username=str(configured_user.get("username", "unknown")),
             role=role,
             permissions=ROLE_PERMISSIONS[role],
+            station_codes=frozenset(str(code).upper() for code in station_codes),
         )
     return None
 
@@ -113,3 +119,13 @@ def require_roles(*allowed_roles: Role) -> Callable:
         return user
 
     return role_dependency
+
+
+def authorize_station(user: User, station_code: str) -> None:
+    """Enforce station scope independently of the client interface."""
+    station_code = station_code.upper()
+    if "*" not in user.station_codes and station_code not in user.station_codes:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This user is not authorized for the requested station",
+        )

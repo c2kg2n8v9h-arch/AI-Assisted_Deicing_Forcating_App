@@ -52,21 +52,26 @@ function renderReport(report) {
   elements.nextFlightDetail.textContent = report.next_flight.minutes_until_departure >= 0
     ? `${report.next_flight.flight_id} · ${report.next_flight.minutes_until_departure} min`
     : `${report.next_flight.flight_id} · departed`;
-  elements.queueStatus.textContent = `${recommendations.length} units assigned`;
+  elements.queueStatus.textContent = `${recommendations.length} recommendations pending review`;
 
   elements.flightRows.innerHTML = flights
     .sort((a, b) => b.deice_priority_score - a.deice_priority_score)
     .map((flight) => `<tr>
       <td>${escapeHTML(flight.flight_id)} <small>${escapeHTML(flight.aircraft_type)}</small></td>
       <td>${formatTime(flight.scheduled_departure)}</td>
-      <td>${formatTime(flight.spray_completion_time)}</td>
+      <td>${flight.spray_completion_time ? formatTime(flight.spray_completion_time) : 'Not forecast'}</td>
       <td class="${flight.minutes_until_departure >= 0 ? 'assigned' : 'unassigned'}">${flight.minutes_until_departure >= 0 ? `${flight.minutes_until_departure} min` : 'departed'}</td>
       <td class="priority">${flight.deice_priority_score.toFixed(2)}</td>
-      <td class="${flight.assigned_truck_id ? 'assigned' : 'unassigned'}">${escapeHTML(flight.assigned_truck_id || 'Awaiting unit')}</td>
+      <td class="${flight.assigned_truck_id ? 'assigned' : 'unassigned'}">${escapeHTML(
+        flight.assigned_truck_id
+          || (flight.recommended_truck_id
+            ? `Recommend ${flight.recommended_truck_id} · pending approval`
+            : 'No approved assignment')
+      )}</td>
     </tr>`).join('');
 
   elements.truckList.innerHTML = trucks.map((truck) => `<div class="truck-row">
-    <div><p class="truck-name">${escapeHTML(truck.truck_id)} ${truck.is_available ? '· assigned' : '· busy'}</p><span class="truck-location">Gate ${escapeHTML(truck.location_gate)} · ${escapeHTML(truck.assigned_flight_id || 'No flight')}</span></div>
+    <div><p class="truck-name">${escapeHTML(truck.truck_id)} ${truck.is_available ? '· available' : '· busy'}</p><span class="truck-location">Gate ${escapeHTML(truck.location_gate)} · ${escapeHTML(truck.assigned_flight_id || 'No approved assignment')}</span></div>
     <span class="capacity ${truck.fluid_capacity_pct < 30 ? 'low' : ''}">${truck.fluid_capacity_pct}%</span>
   </div>`).join('');
 

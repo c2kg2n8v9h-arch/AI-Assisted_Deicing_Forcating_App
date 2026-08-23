@@ -62,7 +62,8 @@ API endpoints:
 - `GET http://127.0.0.1:8000/operations`
 - `GET http://127.0.0.1:8000/operations?station=DEN`
 - `GET http://127.0.0.1:8000/stations`
-- `POST http://127.0.0.1:8000/operations/dispatch` (dispatcher or admin)
+- `GET http://127.0.0.1:8000/operations/recommendations` (dispatcher or admin)
+- `POST http://127.0.0.1:8000/operations/recommendations/{id}/decisions`
 - `GET http://127.0.0.1:8000/users/me`
 - Interactive API documentation: `http://127.0.0.1:8000/docs`
 
@@ -74,11 +75,15 @@ Authentication is required by default. For local read-only dashboard development
 Authorization: Bearer your-api-key
 ```
 
-Roles are `viewer` (read operations), `dispatcher` (read and dispatch), and `admin` (all current permissions). Local mode only provides `viewer` access.
+Roles are `viewer` (read operations), `dispatcher` (read and record advisory decisions), and `admin` (all current permissions). Each configured user must have a non-empty `station_codes` list. Local mode provides read-only access across the mock stations.
+
+Decision requests require an `Idempotency-Key` header and record an append-only, hash-chained audit entry. Accepting a recommendation records human review only; it does not assign a truck or change operational state.
 
 The dashboard station selector supports `DEN`, `BZN`, `ORD`, and `JFK`. Station profiles are stored in [data/stations.json](data/stations.json); the current release uses shared mock flight and truck operations data with station-specific weather and airport context.
 
-The dashboard also shows mock snow/precipitation conditions for all supported stations, estimated spray completion time for each flight, and the time remaining until the next mock departure.
+The dashboard also shows mock snow/precipitation conditions for all supported stations, advisory queue completion estimates, and the time remaining until the next mock departure. Mock departure times are generated from relative offsets when each report is built, so fixtures do not silently expire.
+
+All queue, duration, anomaly, and resource outputs are advisory and require review by authorized operations personnel. They do not assign a truck, declare an aircraft clean, override an approved procedure, or authorize departure.
 
 ## Structure
 

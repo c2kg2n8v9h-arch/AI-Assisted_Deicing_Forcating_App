@@ -1,28 +1,52 @@
-from datetime import datetime, timedelta
 import json
+import os
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, status
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
 
+from .decision_store import AdvisoryDecisionStore
 from .Deicing import (
     DecisionSupportEngine,
     DeicingAIEngine,
-    OptimizationEngine,
     OperationsDashboard,
     WeatherData,
     load_operations_data,
 )
-from .security import Role, User, auth_enabled, require_roles
-
+from .security import (
+    Role,
+    User,
+    auth_enabled,
+    authorize_station,
+    require_roles,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATA_PATH = PROJECT_ROOT / "data" / "operations_data.json"
 STATIONS_PATH = PROJECT_ROOT / "data" / "stations.json"
 FRONTEND_PATH = PROJECT_ROOT / "frontend"
 load_dotenv(PROJECT_ROOT / ".env")
+
+
+class RecommendationDecisionRequest(BaseModel):
+    station: str = Field(min_length=3, max_length=3, pattern=r"^[A-Za-z]{3}$")
+    decision: Literal["accepted", "rejected", "modified"]
+    reason: str = Field(min_length=3, max_length=500)
+
+
+def get_decision_store() -> AdvisoryDecisionStore:
+    configured_path = os.getenv("DEICING_DECISION_DB")
+    path = (
+        Path(configured_path)
+        if configured_path
+        else PROJECT_ROOT / "data" / "advisory_decisions.sqlite3"
+    )
+    return AdvisoryDecisionStore(path)
+
 
 app = FastAPI(
     title="Airport Deicing Operations API",
@@ -49,9 +73,9 @@ def get_station_profile(station_code: str) -> dict[str, Any]:
 
 def build_operations_report(station_code: str = "DEN") -> dict[str, Any]:
     """Run the deicing pipeline and return a JSON-serializable report."""
-    current_time = datetime.now()
+    current_time = datetime.now(UTC)
     station = get_station_profile(station_code)
-    _, flights, trucks = load_operations_data(DATA_PATH)
+    _, flights, trucks = load_operations_data(DATA_PATH, reference_time=current_time)
     weather = WeatherData(**station["weather"])
     ai_engine = DeicingAIEngine()
 
@@ -65,35 +89,26 @@ def build_operations_report(station_code: str = "DEN") -> dict[str, Any]:
     recommendations = DecisionSupportEngine.recommend_resources(
         flights, trucks, weather, current_time
     )
-    queue_forecast = DecisionSupportEngine.forecast_queue(
-        flights, trucks, weather, current_time
-    )
-    anomalies = DecisionSupportEngine.detect_anomalies(
-        flights, trucks, weather, current_time
-    )
+    queue_forecast = DecisionSupportEngine.forecast_queue(flights, trucks, weather, current_time)
+    anomalies = DecisionSupportEngine.detect_anomalies(flights, trucks, weather, current_time)
     alerts = OperationsDashboard.check_operational_alerts(flights, current_time)
     summary = OperationsDashboard.generate_shift_summary(flights, trucks)
+    queue_timing = {item["flight_id"]: item for item in queue_forecast["flights"]}
     for flight in flights:
-        completion_time = current_time + timedelta(
-            minutes=flight.estimated_deice_duration_min
-        )
+        forecast = queue_timing.get(flight.flight_id)
         minutes_until_departure = round(
             (flight.scheduled_departure - current_time).total_seconds() / 60
         )
         timing = {
-            "spray_completion_time": completion_time.isoformat(),
+            "spray_start_time": forecast["estimated_start"] if forecast else None,
+            "spray_completion_time": (forecast["estimated_completion"] if forecast else None),
             "minutes_until_departure": minutes_until_departure,
             "departure_status": "scheduled" if minutes_until_departure >= 0 else "departed",
         }
         flight_timing[flight.flight_id] = timing
 
-    future_flights = [
-        flight for flight in flights if flight.scheduled_departure >= current_time
-    ]
-    next_flight = min(
-        future_flights or flights,
-        key=lambda flight: flight.scheduled_departure,
-    )
+    future_flights = [flight for flight in flights if flight.scheduled_departure >= current_time]
+    next_flight = min(future_flights, key=lambda flight: flight.scheduled_departure)
 
     return {
         "generated_at": current_time.isoformat(),
@@ -115,7 +130,9 @@ def build_operations_report(station_code: str = "DEN") -> dict[str, Any]:
         "next_flight": {
             "flight_id": next_flight.flight_id,
             "scheduled_departure": next_flight.scheduled_departure.isoformat(),
-            "minutes_until_departure": flight_timing[next_flight.flight_id]["minutes_until_departure"],
+            "minutes_until_departure": flight_timing[next_flight.flight_id][
+                "minutes_until_departure"
+            ],
             "departure_status": flight_timing[next_flight.flight_id]["departure_status"],
         },
         "flights": [
@@ -130,8 +147,19 @@ def build_operations_report(station_code: str = "DEN") -> dict[str, Any]:
                 "estimated_deice_duration_min": flight.estimated_deice_duration_min,
                 "deice_priority_score": flight.deice_priority_score,
                 "assigned_truck_id": flight.assigned_truck_id,
+                "recommended_truck_id": next(
+                    (
+                        item["candidate_truck_id"]
+                        for item in recommendations
+                        if item["flight_id"] == flight.flight_id
+                    ),
+                    None,
+                ),
+                "spray_start_time": flight_timing[flight.flight_id]["spray_start_time"],
                 "spray_completion_time": flight_timing[flight.flight_id]["spray_completion_time"],
-                "minutes_until_departure": flight_timing[flight.flight_id]["minutes_until_departure"],
+                "minutes_until_departure": flight_timing[flight.flight_id][
+                    "minutes_until_departure"
+                ],
                 "departure_status": flight_timing[flight.flight_id]["departure_status"],
             }
             for flight in flights
@@ -167,43 +195,81 @@ def health_check() -> dict[str, str]:
 @app.get("/operations")
 def operations(
     station: str = Query("DEN", min_length=3, max_length=3),
-    _user: User = Depends(
-        require_roles(Role.VIEWER, Role.DISPATCHER, Role.ADMIN)
-    ),
+    _user: User = Depends(require_roles(Role.VIEWER, Role.DISPATCHER, Role.ADMIN)),
 ) -> dict[str, Any]:
+    authorize_station(_user, station)
     return build_operations_report(station)
 
 
-@app.post("/operations/dispatch")
-def dispatch_operations(
+@app.get("/operations/recommendations")
+def operations_recommendations(
     station: str = Query("DEN", min_length=3, max_length=3),
     _user: User = Depends(require_roles(Role.DISPATCHER, Role.ADMIN)),
 ) -> dict[str, Any]:
-    # This endpoint currently returns an advisory plan. A future state-changing
-    # dispatch action must require explicit recommendation approval and audit it.
-    return build_operations_report(station)
+    authorize_station(_user, station)
+    report = build_operations_report(station)
+    return {
+        "generated_at": report["generated_at"],
+        "station": report["station"],
+        "decision_support": report["decision_support"],
+        "recommendations": report["recommendations"],
+    }
+
+
+@app.post(
+    "/operations/recommendations/{recommendation_id}/decisions",
+    status_code=status.HTTP_201_CREATED,
+)
+def decide_recommendation(
+    recommendation_id: str,
+    body: RecommendationDecisionRequest,
+    idempotency_key: str = Header(min_length=8, max_length=128, alias="Idempotency-Key"),
+    user: User = Depends(require_roles(Role.DISPATCHER, Role.ADMIN)),
+) -> dict[str, Any]:
+    """Record human review of an advisory result without assigning resources."""
+    authorize_station(user, body.station)
+    report = build_operations_report(body.station)
+    valid_ids = {item["recommendation_id"] for item in report["recommendations"]}
+    if recommendation_id not in valid_ids:
+        raise HTTPException(status_code=404, detail="Advisory recommendation not found")
+    try:
+        record = get_decision_store().record(
+            idempotency_key=idempotency_key,
+            recommendation_id=recommendation_id,
+            station_code=body.station,
+            decision=body.decision,
+            reason=body.reason,
+            actor=user.username,
+        )
+    except ValueError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    return {
+        "mode": "advisory",
+        "resource_assignment_changed": False,
+        "decision_record": record,
+        "limitations": DecisionSupportEngine.DISCLAIMER,
+    }
 
 
 @app.get("/stations")
 def stations(
-    _user: User = Depends(
-        require_roles(Role.VIEWER, Role.DISPATCHER, Role.ADMIN)
-    ),
+    _user: User = Depends(require_roles(Role.VIEWER, Role.DISPATCHER, Role.ADMIN)),
 ) -> list[dict[str, Any]]:
     return [
         {key: station[key] for key in ("code", "name", "timezone")}
         for station in load_station_profiles()
+        if "*" in _user.station_codes or station["code"] in _user.station_codes
     ]
 
 
 @app.get("/stations/overview")
 def stations_overview(
-    _user: User = Depends(
-        require_roles(Role.VIEWER, Role.DISPATCHER, Role.ADMIN)
-    ),
+    _user: User = Depends(require_roles(Role.VIEWER, Role.DISPATCHER, Role.ADMIN)),
 ) -> list[dict[str, Any]]:
     overview = []
     for station in load_station_profiles():
+        if "*" not in _user.station_codes and station["code"] not in _user.station_codes:
+            continue
         weather = WeatherData(**station["weather"])
         overview.append(
             {
@@ -221,14 +287,13 @@ def stations_overview(
 
 @app.get("/users/me")
 def current_user(
-    user: User = Depends(
-        require_roles(Role.VIEWER, Role.DISPATCHER, Role.ADMIN)
-    ),
+    user: User = Depends(require_roles(Role.VIEWER, Role.DISPATCHER, Role.ADMIN)),
 ) -> dict[str, Any]:
     return {
         "username": user.username,
         "role": user.role.value,
         "permissions": sorted(user.permissions),
+        "station_codes": sorted(user.station_codes),
         "authentication_enabled": auth_enabled(),
     }
 

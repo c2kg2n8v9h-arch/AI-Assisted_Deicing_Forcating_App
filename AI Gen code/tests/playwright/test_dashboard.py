@@ -79,9 +79,11 @@ def test_dashboard_renders_operations_data(page: Page, application_url: str):
     external_requests = []
     page.on(
         "request",
-        lambda request: external_requests.append(request.url)
-        if not request.url.startswith(application_url)
-        else None,
+        lambda request: (
+            external_requests.append(request.url)
+            if not request.url.startswith(application_url)
+            else None
+        ),
     )
     page.goto(application_url)
 

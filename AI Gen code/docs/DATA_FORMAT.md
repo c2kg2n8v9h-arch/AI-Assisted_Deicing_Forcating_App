@@ -15,7 +15,7 @@ Supported station profiles are stored in [stations.json](../data/stations.json).
 
 - `flight_id`: Unique flight identifier.
 - `aircraft_type`: Aircraft model, such as `A320` or `B777`.
-- `scheduled_departure`: Departure timestamp in ISO 8601 format.
+- `departure_offset_min`: Mock departure offset in minutes from report generation.
 - `gate`: Airport gate identifier.
 - `passengers_count`: Number of passengers affected.
 
