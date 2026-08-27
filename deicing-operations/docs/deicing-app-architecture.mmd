@@ -1,0 +1,31 @@
+flowchart LR
+    subgraph inputs["Data Inputs"]
+        direction TB
+        weather["Weather APIs"]
+        sensors["IoT Sensors"]
+        forms["User Input Forms"]
+    end
+
+    subgraph core["Core Processing"]
+        direction LR
+        ingestion["Data Ingestion"]
+        processing["Automated Processing"]
+        analytics["Predictive Analytics"]
+
+        ingestion --> processing --> analytics
+    end
+
+    subgraph outputs["Outputs & Integrations"]
+        direction TB
+        alerts["Alert Systems<br/>SMS / Email"]
+        dashboard["Fleet Operations Dashboard"]
+        storage["Cloud Storage"]
+    end
+
+    weather --> ingestion
+    sensors --> ingestion
+    forms --> ingestion
+
+    analytics --> alerts
+    analytics --> dashboard
+    analytics --> storage

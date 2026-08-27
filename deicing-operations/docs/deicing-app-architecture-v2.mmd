@@ -1,0 +1,38 @@
+flowchart LR
+    subgraph inputs["Data Inputs"]
+        direction TB
+        weather["Weather APIs"]
+        sensors["IoT Sensors"]
+        forms["User Input Forms"]
+    end
+
+    subgraph core["Deicing Operations Engine"]
+        direction LR
+        ingestion["Data Ingestion"]
+        processing["Automated Processing"]
+        analytics["Predictive Analytics"]
+
+        ingestion --> processing --> analytics
+    end
+
+    subgraph outputs["Outputs & Integrations"]
+        direction TB
+        vehicles["Deicing Vehicles"]
+        aircraft["Aircraft Awaiting Deicing"]
+        alerts["Alert Systems<br/>SMS / Email"]
+        dashboards["Fleet Operations Dashboards"]
+        storage["Cloud Storage"]
+    end
+
+    weather --> ingestion
+    sensors --> ingestion
+    forms --> ingestion
+
+    analytics --> vehicles
+    analytics --> aircraft
+    analytics --> alerts
+    analytics --> dashboards
+    analytics --> storage
+
+    vehicles --> sensors
+    aircraft --> processing
