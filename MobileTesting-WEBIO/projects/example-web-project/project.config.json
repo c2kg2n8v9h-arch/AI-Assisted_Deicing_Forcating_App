@@ -1,0 +1,16 @@
+{
+  "id": "example-web-project",
+  "defaultEnvironment": "qa",
+  "specGlob": "projects/example-web-project/**/*.spec.ts",
+  "environments": {
+    "local": { "baseUrl": "https://the-internet.herokuapp.com" },
+    "qa": { "baseUrl": "https://the-internet.herokuapp.com" },
+    "staging": { "baseUrl": "https://the-internet.herokuapp.com" },
+    "production": { "baseUrl": "https://the-internet.herokuapp.com" }
+  },
+  "suites": {
+    "all": {},
+    "smoke": { "grep": "\\[smoke\\]" },
+    "regression": { "grep": "\\[regression\\]" }
+  }
+}

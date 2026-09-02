@@ -1,0 +1,93 @@
+name: Automation quality gate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: automation-quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Static quality and unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up workspace
+        uses: ./.github/actions/setup-workspace
+
+      - name: Validate formatting, lint, and types
+        run: pnpm validate
+
+      - name: Run unit tests
+        run: pnpm test:unit
+
+      - name: Run offline AI safety evaluation
+        run: pnpm eval:offline
+
+  browser:
+    name: ${{ matrix.browser }} smoke test
+    needs: quality
+    runs-on: windows-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        browser:
+          - chrome
+          - edge
+    env:
+      BROWSER: ${{ matrix.browser }}
+      CI: true
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up workspace
+        uses: ./.github/actions/setup-workspace
+
+      - name: Confirm browser and Java availability
+        shell: pwsh
+        run: |
+          if ('${{ matrix.browser }}' -eq 'chrome') {
+            (Get-Item 'C:\Program Files\Google\Chrome\Application\chrome.exe').VersionInfo.ProductVersion
+          } else {
+            (Get-Item 'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe').VersionInfo.ProductVersion
+          }
+          java -version
+
+      - name: Run reference smoke suite
+        run: pnpm --filter @automation-platform/example-web-project test:ci
+
+      - name: Generate Allure HTML report
+        if: always()
+        run: pnpm report:generate
+
+      - name: Verify retained artifacts contain no configured secrets
+        id: security-scan
+        if: always()
+        run: pnpm --filter @automation-platform/example-web-project report:verify
+
+      - name: Upload sanitized execution evidence
+        if: always() && steps.security-scan.outcome == 'success'
+        uses: actions/upload-artifact@v7
+        with:
+          name: automation-evidence-${{ matrix.browser }}-${{ github.run_id }}
+          path: artifacts/executions/
+          if-no-files-found: error
+          retention-days: 14
+          include-hidden-files: false

@@ -1,0 +1,44 @@
+{
+  "name": "automation-intelligence-platform",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Reusable TypeScript automation platform with a WebdriverIO runner and optional AI capabilities",
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "typecheck": "tsc --build --pretty",
+    "clean": "tsc --build --clean",
+    "lint": "eslint . --max-warnings 0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "validate": "pnpm run format:check && pnpm run lint && pnpm run typecheck",
+    "wdio:config:check": "pnpm --filter @automation-platform/webdriverio-runner config:check",
+    "test:web:chrome": "pnpm --filter @automation-platform/webdriverio-runner test:chrome",
+    "test:web:edge": "pnpm --filter @automation-platform/webdriverio-runner test:edge",
+    "test:web:headless": "pnpm --filter @automation-platform/webdriverio-runner test:headless",
+    "test:web:ci": "pnpm --filter @automation-platform/webdriverio-runner test:ci",
+    "test:example:chrome": "pnpm --filter @automation-platform/example-web-project test:chrome",
+    "test:example:edge": "pnpm --filter @automation-platform/example-web-project test:edge",
+    "test:example:headless": "pnpm --filter @automation-platform/example-web-project test:headless",
+    "test:example:ci": "pnpm --filter @automation-platform/example-web-project test:ci",
+    "test:example:smoke": "pnpm --filter @automation-platform/example-web-project test:smoke",
+    "test:example:regression": "pnpm --filter @automation-platform/example-web-project test:regression",
+    "test:unit": "pnpm run build && pnpm --recursive --if-present test:unit",
+    "eval:offline": "pnpm run build && pnpm --filter @automation-platform/ai-evals eval:offline",
+    "report:clean": "pnpm --filter @automation-platform/webdriverio-runner report:clean",
+    "report:generate": "pnpm --filter @automation-platform/webdriverio-runner report:generate",
+    "report:open": "pnpm --filter @automation-platform/webdriverio-runner report:open",
+    "report:verify": "pnpm --filter @automation-platform/webdriverio-runner report:verify"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.0.0",
+    "eslint": "^10.9.1",
+    "prettier": "^3.9.6",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.69.0"
+  }
+}

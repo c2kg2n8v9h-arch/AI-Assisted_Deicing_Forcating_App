@@ -1,0 +1,37 @@
+{
+  "name": "@automation-platform/webdriverio-runner",
+  "version": "0.1.0",
+  "private": true,
+  "description": "WebdriverIO execution adapter for the Automation Intelligence Platform",
+  "type": "module",
+  "scripts": {
+    "config:check": "tsx ./scripts/validate-config.ts",
+    "report:clean": "tsx ./scripts/clean-reports.ts",
+    "report:generate": "tsx ./scripts/generate-report.ts",
+    "report:open": "tsx ./scripts/open-report.ts",
+    "report:verify": "tsx ./scripts/verify-artifacts.ts",
+    "test": "wdio run ./wdio.conf.ts",
+    "test:chrome": "cross-env BROWSER=chrome wdio run ./wdio.conf.ts",
+    "test:edge": "cross-env BROWSER=edge wdio run ./wdio.conf.ts",
+    "test:headless": "cross-env RUN_MODE=headless wdio run ./wdio.conf.ts",
+    "test:ci": "cross-env RUN_MODE=ci wdio run ./wdio.conf.ts"
+  },
+  "devDependencies": {
+    "@automation-platform/configuration": "workspace:*",
+    "@automation-platform/observability": "workspace:*",
+    "@automation-platform/security": "workspace:*",
+    "@types/mocha": "^10.0.10",
+    "@wdio/allure-reporter": "^9.31.4",
+    "@wdio/cli": "^9.31.5",
+    "@wdio/globals": "^9.31.3",
+    "@wdio/local-runner": "^9.31.5",
+    "@wdio/mocha-framework": "^9.31.5",
+    "@wdio/spec-reporter": "^9.31.2",
+    "@wdio/types": "^9.31.2",
+    "allure-commandline": "^2.43.0",
+    "cross-env": "^10.1.0",
+    "dotenv": "^17.4.2",
+    "tsx": "^4.23.13",
+    "zod": "^4.5.4"
+  }
+}

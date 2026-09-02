@@ -1,0 +1,24 @@
+{
+  "name": "@automation-platform/example-web-project",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Reference web project demonstrating feature-oriented WebdriverIO tests",
+  "type": "module",
+  "scripts": {
+    "config:check": "cross-env PROJECT_CONFIG=projects/example-web-project/project.config.json pnpm --filter @automation-platform/webdriverio-runner config:check",
+    "test:chrome": "cross-env PROJECT_CONFIG=projects/example-web-project/project.config.json SENSITIVE_SCAN_VALUES=SuperSecretPassword!,incorrect-password BROWSER=chrome RUN_MODE=local SUITE=all pnpm --filter @automation-platform/webdriverio-runner test",
+    "test:edge": "cross-env PROJECT_CONFIG=projects/example-web-project/project.config.json SENSITIVE_SCAN_VALUES=SuperSecretPassword!,incorrect-password BROWSER=edge RUN_MODE=local SUITE=all pnpm --filter @automation-platform/webdriverio-runner test",
+    "test:headless": "cross-env PROJECT_CONFIG=projects/example-web-project/project.config.json SENSITIVE_SCAN_VALUES=SuperSecretPassword!,incorrect-password BROWSER=chrome RUN_MODE=headless SUITE=all pnpm --filter @automation-platform/webdriverio-runner test",
+    "test:ci": "cross-env PROJECT_CONFIG=projects/example-web-project/project.config.json SENSITIVE_SCAN_VALUES=SuperSecretPassword!,incorrect-password RUN_MODE=ci SUITE=smoke pnpm --filter @automation-platform/webdriverio-runner test",
+    "test:smoke": "cross-env PROJECT_CONFIG=projects/example-web-project/project.config.json SENSITIVE_SCAN_VALUES=SuperSecretPassword!,incorrect-password BROWSER=chrome RUN_MODE=headless SUITE=smoke pnpm --filter @automation-platform/webdriverio-runner test",
+    "test:regression": "cross-env PROJECT_CONFIG=projects/example-web-project/project.config.json SENSITIVE_SCAN_VALUES=SuperSecretPassword!,incorrect-password BROWSER=chrome RUN_MODE=headless SUITE=regression pnpm --filter @automation-platform/webdriverio-runner test",
+    "report:verify": "cross-env SENSITIVE_SCAN_VALUES=SuperSecretPassword!,incorrect-password pnpm --filter @automation-platform/webdriverio-runner report:verify"
+  },
+  "devDependencies": {
+    "@automation-platform/webdriverio-runner": "workspace:*",
+    "@wdio/globals": "^9.31.3",
+    "@wdio/mocha-framework": "^9.31.5",
+    "cross-env": "^10.1.0",
+    "webdriverio": "^9.31.5"
+  }
+}

@@ -1,0 +1,11 @@
+packages:
+  - 'apps/*'
+  - 'apps/runners/*'
+  - 'apps/mcp-servers/*'
+  - 'packages/*'
+  - 'packages/adapters/*'
+  - 'projects/*'
+allowBuilds:
+  edgedriver: true
+  esbuild: true
+  geckodriver: false

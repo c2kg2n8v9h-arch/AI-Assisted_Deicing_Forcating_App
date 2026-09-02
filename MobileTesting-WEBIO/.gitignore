@@ -1,0 +1,19 @@
+# Dependencies and TypeScript output
+node_modules/
+.pnpm-store/
+dist/
+*.tsbuildinfo
+
+# Environment files and secrets
+.env
+.env.*
+!.env.example
+
+# Generated automation evidence
+artifacts/*
+!artifacts/README.md
+
+# Tool and operating-system output
+.eslintcache
+.DS_Store
+Thumbs.db

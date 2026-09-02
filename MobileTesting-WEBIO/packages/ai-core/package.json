@@ -1,0 +1,21 @@
+{
+  "name": "@automation-platform/ai-core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Vendor-neutral contracts and safe defaults for optional automation intelligence",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "test:unit": "node --test ./dist/**/*.spec.js"
+  },
+  "dependencies": {
+    "@automation-platform/contracts": "workspace:*"
+  }
+}

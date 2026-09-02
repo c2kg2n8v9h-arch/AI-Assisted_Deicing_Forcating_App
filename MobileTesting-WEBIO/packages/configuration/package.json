@@ -1,0 +1,19 @@
+{
+  "name": "@automation-platform/configuration",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Validated project configuration loader for automation runners",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@automation-platform/contracts": "workspace:*",
+    "zod": "^4.5.4"
+  }
+}
