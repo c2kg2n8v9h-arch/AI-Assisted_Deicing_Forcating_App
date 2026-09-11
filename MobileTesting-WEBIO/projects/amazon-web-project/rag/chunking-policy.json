@@ -1,0 +1,9 @@
+{
+  "kind": "chunking-policy",
+  "projectId": "amazon-web-project",
+  "strategy": "semantic-section",
+  "targetTokens": 700,
+  "overlapTokens": 100,
+  "preserveFields": ["documentId", "title", "sourceUri", "version", "classification", "owner"],
+  "excludedPaths": ["artifacts", "dist", "node_modules"]
+}

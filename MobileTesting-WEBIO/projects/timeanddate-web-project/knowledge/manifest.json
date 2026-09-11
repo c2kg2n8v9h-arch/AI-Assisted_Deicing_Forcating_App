@@ -1,0 +1,17 @@
+{
+  "projectId": "timeanddate-web-project",
+  "owner": "quality-engineering",
+  "classification": "internal",
+  "reviewedAt": "2026-09-11T00:00:00.000Z",
+  "documents": [
+    {
+      "documentId": "timeanddate-rag-policy",
+      "title": "Timeanddate Project RAG Policy",
+      "sourceUri": "projects/timeanddate-web-project/rag/retrieval-policy.json",
+      "version": "2026.09",
+      "owner": "quality-engineering",
+      "classification": "internal",
+      "reviewedAt": "2026-09-11T00:00:00.000Z"
+    }
+  ]
+}

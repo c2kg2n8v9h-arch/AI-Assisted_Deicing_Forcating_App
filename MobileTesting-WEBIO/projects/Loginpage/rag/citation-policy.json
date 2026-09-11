@@ -1,0 +1,8 @@
+{
+  "kind": "citation-policy",
+  "projectId": "loginpage",
+  "requiredFor": ["test-analysis", "authentication-rules", "known-issues"],
+  "minimumCitations": 1,
+  "allowUncitedOutput": false,
+  "citationFields": ["documentId", "sourceUri", "version", "reviewedAt"]
+}

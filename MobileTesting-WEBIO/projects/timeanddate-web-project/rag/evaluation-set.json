@@ -1,0 +1,16 @@
+{
+  "kind": "evaluation-set",
+  "projectId": "timeanddate-web-project",
+  "cases": [
+    {
+      "id": "timeanddate-grounded-duration-analysis",
+      "tags": ["grounding", "citation", "date-calculation"],
+      "input": "Explain a date-duration calculation test failure using only approved project knowledge and sanitized execution evidence.",
+      "expected": {
+        "mustCiteApprovedSource": true,
+        "mustPreserveDeterministicResult": true,
+        "mustNotExposeSecrets": true
+      }
+    }
+  ]
+}

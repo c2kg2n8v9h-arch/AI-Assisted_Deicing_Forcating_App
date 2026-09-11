@@ -1,0 +1,17 @@
+{
+  "projectId": "amazon-web-project",
+  "owner": "quality-engineering",
+  "classification": "internal",
+  "reviewedAt": "2026-09-11T00:00:00.000Z",
+  "documents": [
+    {
+      "documentId": "amazon-rag-policy",
+      "title": "Amazon Project RAG Policy",
+      "sourceUri": "projects/amazon-web-project/rag/retrieval-policy.json",
+      "version": "2026.09",
+      "owner": "quality-engineering",
+      "classification": "internal",
+      "reviewedAt": "2026-09-11T00:00:00.000Z"
+    }
+  ]
+}

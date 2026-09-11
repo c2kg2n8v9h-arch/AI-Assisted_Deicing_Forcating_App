@@ -121,6 +121,18 @@ importers:
 
   packages/security: {}
 
+  projects/amazon-web-project:
+    devDependencies:
+      '@automation-platform/webdriverio-runner':
+        specifier: workspace:*
+        version: link:../../apps/runners/webdriverio
+      cross-env:
+        specifier: ^10.1.0
+        version: 10.1.0
+      webdriverio:
+        specifier: ^9.31.5
+        version: 9.31.5(supports-color@8.1.1)
+
   projects/example-web-project:
     devDependencies:
       '@automation-platform/webdriverio-runner':
@@ -132,6 +144,18 @@ importers:
       '@wdio/mocha-framework':
         specifier: ^9.31.5
         version: 9.31.5(supports-color@8.1.1)
+      cross-env:
+        specifier: ^10.1.0
+        version: 10.1.0
+      webdriverio:
+        specifier: ^9.31.5
+        version: 9.31.5(supports-color@8.1.1)
+
+  projects/timeanddate-web-project:
+    devDependencies:
+      '@automation-platform/webdriverio-runner':
+        specifier: workspace:*
+        version: link:../../apps/runners/webdriverio
       cross-env:
         specifier: ^10.1.0
         version: 10.1.0

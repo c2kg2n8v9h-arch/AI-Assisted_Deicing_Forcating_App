@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "2026.09",
+  "classificationCeiling": "internal",
+  "sharedKnowledgePath": "knowledge",
+  "generatedIndexesPolicy": "Generated vector indexes and embeddings must stay out of source control.",
+  "readinessLevels": {
+    "0": "No RAG structure",
+    "1": "Project documentation or data exists",
+    "2": "Approved knowledge manifest exists",
+    "3": "Retrieval, citation, access, and chunking policies exist",
+    "4": "RAG evaluation gates exist",
+    "5": "Enterprise multi-tenant RAG with CI audit trail"
+  },
+  "projects": [
+    {
+      "id": "example-web-project",
+      "name": "Customer Portal Web Project",
+      "domain": "salesforce",
+      "status": "rag-ready",
+      "readinessLevel": 5,
+      "projectConfig": "projects/example-web-project/project.config.json",
+      "knowledgePath": "projects/example-web-project/knowledge",
+      "retrievalPolicy": "projects/example-web-project/rag/retrieval-policy.json",
+      "citationPolicy": "projects/example-web-project/rag/citation-policy.json",
+      "accessPolicy": "projects/example-web-project/rag/access-policy.json",
+      "chunkingPolicy": "projects/example-web-project/rag/chunking-policy.json",
+      "evaluationSet": "projects/example-web-project/rag/evaluation-set.json"
+    },
+    {
+      "id": "amazon-web-project",
+      "name": "Amazon Web Project",
+      "domain": "ecommerce",
+      "status": "rag-ready",
+      "readinessLevel": 5,
+      "projectConfig": "projects/amazon-web-project/project.config.json",
+      "knowledgePath": "projects/amazon-web-project/knowledge",
+      "retrievalPolicy": "projects/amazon-web-project/rag/retrieval-policy.json",
+      "citationPolicy": "projects/amazon-web-project/rag/citation-policy.json",
+      "accessPolicy": "projects/amazon-web-project/rag/access-policy.json",
+      "chunkingPolicy": "projects/amazon-web-project/rag/chunking-policy.json",
+      "evaluationSet": "projects/amazon-web-project/rag/evaluation-set.json"
+    },
+    {
+      "id": "timeanddate-web-project",
+      "name": "Timeanddate Web Project",
+      "domain": "date-calculation",
+      "status": "rag-ready",
+      "readinessLevel": 5,
+      "projectConfig": "projects/timeanddate-web-project/project.config.json",
+      "knowledgePath": "projects/timeanddate-web-project/knowledge",
+      "retrievalPolicy": "projects/timeanddate-web-project/rag/retrieval-policy.json",
+      "citationPolicy": "projects/timeanddate-web-project/rag/citation-policy.json",
+      "accessPolicy": "projects/timeanddate-web-project/rag/access-policy.json",
+      "chunkingPolicy": "projects/timeanddate-web-project/rag/chunking-policy.json",
+      "evaluationSet": "projects/timeanddate-web-project/rag/evaluation-set.json"
+    },
+    {
+      "id": "loginpage",
+      "name": "Login Page Project",
+      "domain": "authentication",
+      "status": "blocked",
+      "readinessLevel": 3,
+      "blocker": "Project tenant exists, but no executable specs or project.config.json are present yet.",
+      "knowledgePath": "projects/Loginpage/knowledge",
+      "retrievalPolicy": "projects/Loginpage/rag/retrieval-policy.json",
+      "citationPolicy": "projects/Loginpage/rag/citation-policy.json",
+      "accessPolicy": "projects/Loginpage/rag/access-policy.json",
+      "chunkingPolicy": "projects/Loginpage/rag/chunking-policy.json",
+      "evaluationSet": "projects/Loginpage/rag/evaluation-set.json"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "projectId": "example-web-project",
+  "owner": "quality-engineering",
+  "classification": "internal",
+  "reviewedAt": "2026-09-11T00:00:00.000Z",
+  "documents": [
+    {
+      "documentId": "customer-portal-rag-policy",
+      "title": "Customer Portal RAG Policy",
+      "sourceUri": "projects/example-web-project/rag/retrieval-policy.json",
+      "version": "2026.09",
+      "owner": "quality-engineering",
+      "classification": "internal",
+      "reviewedAt": "2026-09-11T00:00:00.000Z"
+    }
+  ]
+}

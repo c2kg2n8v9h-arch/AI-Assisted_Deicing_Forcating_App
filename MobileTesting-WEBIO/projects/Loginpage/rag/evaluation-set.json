@@ -1,0 +1,16 @@
+{
+  "kind": "evaluation-set",
+  "projectId": "loginpage",
+  "cases": [
+    {
+      "id": "loginpage-grounded-authentication-analysis",
+      "tags": ["grounding", "citation", "authentication"],
+      "input": "Explain a login-page test failure using only approved project knowledge and sanitized execution evidence.",
+      "expected": {
+        "mustCiteApprovedSource": true,
+        "mustPreserveDeterministicResult": true,
+        "mustNotExposeSecrets": true
+      }
+    }
+  ]
+}

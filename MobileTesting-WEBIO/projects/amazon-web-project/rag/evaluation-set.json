@@ -1,0 +1,16 @@
+{
+  "kind": "evaluation-set",
+  "projectId": "amazon-web-project",
+  "cases": [
+    {
+      "id": "amazon-grounded-product-flow-analysis",
+      "tags": ["grounding", "citation", "ecommerce"],
+      "input": "Explain an Amazon product-flow test failure using only approved project knowledge and sanitized execution evidence.",
+      "expected": {
+        "mustCiteApprovedSource": true,
+        "mustPreserveDeterministicResult": true,
+        "mustNotExposeSecrets": true
+      }
+    }
+  ]
+}

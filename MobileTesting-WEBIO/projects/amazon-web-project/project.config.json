@@ -1,0 +1,12 @@
+{
+  "id": "amazon-web-project",
+  "defaultEnvironment": "production",
+  "specGlob": "projects/amazon-web-project/**/*.spec.mjs",
+  "environments": {
+    "local": { "baseUrl": "https://www.amazon.com" },
+    "qa": { "baseUrl": "https://www.amazon.com" },
+    "staging": { "baseUrl": "https://www.amazon.com" },
+    "production": { "baseUrl": "https://www.amazon.com" }
+  },
+  "suites": { "all": {}, "smoke": {}, "regression": {} }
+}

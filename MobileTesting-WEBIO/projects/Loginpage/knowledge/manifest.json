@@ -1,0 +1,17 @@
+{
+  "projectId": "loginpage",
+  "owner": "quality-engineering",
+  "classification": "internal",
+  "reviewedAt": "2026-09-11T00:00:00.000Z",
+  "documents": [
+    {
+      "documentId": "loginpage-rag-policy",
+      "title": "Login Page RAG Policy",
+      "sourceUri": "projects/Loginpage/rag/retrieval-policy.json",
+      "version": "2026.09",
+      "owner": "quality-engineering",
+      "classification": "internal",
+      "reviewedAt": "2026-09-11T00:00:00.000Z"
+    }
+  ]
+}

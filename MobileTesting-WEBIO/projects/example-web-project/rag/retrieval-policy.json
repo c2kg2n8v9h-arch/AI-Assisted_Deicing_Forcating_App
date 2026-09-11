@@ -1,0 +1,13 @@
+{
+  "kind": "retrieval-policy",
+  "projectId": "example-web-project",
+  "classificationCeiling": "internal",
+  "retrievalOrder": ["projects/example-web-project/knowledge", "domains/salesforce", "knowledge"],
+  "requiredFilters": ["projectId", "classification", "reviewedAt", "owner"],
+  "denyWhen": [
+    "source metadata is missing",
+    "document classification exceeds the request classification ceiling",
+    "document belongs to a different project and is not explicitly shared"
+  ],
+  "maxMatches": 8
+}

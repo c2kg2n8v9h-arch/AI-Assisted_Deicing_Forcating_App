@@ -1,16 +1,28 @@
 {
-  "id": "example-web-project",
+  "id": "customer-portal",
   "defaultEnvironment": "qa",
   "specGlob": "projects/example-web-project/**/*.spec.ts",
   "environments": {
-    "local": { "baseUrl": "https://the-internet.herokuapp.com" },
-    "qa": { "baseUrl": "https://the-internet.herokuapp.com" },
-    "staging": { "baseUrl": "https://the-internet.herokuapp.com" },
-    "production": { "baseUrl": "https://the-internet.herokuapp.com" }
+    "local": {
+      "baseUrl": "https://orgfarm-8217073d89-dev-ed.develop.lightning.force.com/lightning/n/devedapp__Welcome"
+    },
+    "qa": {
+      "baseUrl": "https://orgfarm-8217073d89-dev-ed.develop.lightning.force.com/lightning/n/devedapp__Welcome"
+    },
+    "staging": {
+      "baseUrl": "https://orgfarm-8217073d89-dev-ed.develop.lightning.force.com/lightning/n/devedapp__Welcome"
+    },
+    "production": {
+      "baseUrl": "https://orgfarm-8217073d89-dev-ed.develop.lightning.force.com/lightning/n/devedapp__Welcome"
+    }
   },
   "suites": {
     "all": {},
-    "smoke": { "grep": "\\[smoke\\]" },
-    "regression": { "grep": "\\[regression\\]" }
+    "smoke": {
+      "grep": "\\[smoke\\]"
+    },
+    "regression": {
+      "grep": "\\[regression\\]"
+    }
   }
 }

@@ -1,0 +1,8 @@
+{
+  "kind": "access-policy",
+  "projectId": "loginpage",
+  "allowedConsumers": ["ai-worker", "test-analysis", "offline-evals"],
+  "writeRequiresApproval": true,
+  "secretHandling": "Reject passwords, MFA material, cookies, tokens, credentials, and session captures before indexing.",
+  "crossProjectRetrieval": "Deny by default unless a shared domain package or root knowledge entry explicitly allows reuse."
+}

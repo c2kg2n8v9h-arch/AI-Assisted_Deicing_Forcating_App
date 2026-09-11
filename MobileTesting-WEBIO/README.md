@@ -77,6 +77,7 @@ pnpm format:check
 pnpm lint
 pnpm typecheck
 pnpm validate
+pnpm rag:validate
 ```
 
 `pnpm validate` is the local and CI quality gate. WebdriverIO installation and
@@ -126,6 +127,21 @@ The optional AI layer has a zero-cost, offline evaluation gate:
 ```bash
 pnpm eval:offline
 ```
+
+## Enterprise RAG readiness
+
+Project-level RAG governance is tracked in `rag-registry.json`. Each project
+must define approved knowledge, retrieval, citation, access, chunking, and
+evaluation policies before it can be marked `rag-ready`.
+
+```bash
+pnpm rag:validate
+pnpm rag:eval
+```
+
+Generated embeddings and vector indexes must not be committed. Retrieval must
+filter by project, classification, owner, and review metadata before AI analysis
+can cite a source.
 
 ## Continuous integration
 

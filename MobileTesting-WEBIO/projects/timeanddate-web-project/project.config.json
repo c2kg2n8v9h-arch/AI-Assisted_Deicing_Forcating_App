@@ -1,0 +1,12 @@
+{
+  "id": "timeanddate-web-project",
+  "defaultEnvironment": "production",
+  "specGlob": "projects/timeanddate-web-project/**/*.spec.mjs",
+  "environments": {
+    "local": { "baseUrl": "https://www.timeanddate.com" },
+    "qa": { "baseUrl": "https://www.timeanddate.com" },
+    "staging": { "baseUrl": "https://www.timeanddate.com" },
+    "production": { "baseUrl": "https://www.timeanddate.com" }
+  },
+  "suites": { "all": {}, "smoke": {}, "regression": {} }
+}

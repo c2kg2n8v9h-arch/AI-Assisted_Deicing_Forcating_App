@@ -1,0 +1,8 @@
+{
+  "kind": "access-policy",
+  "projectId": "timeanddate-web-project",
+  "allowedConsumers": ["ai-worker", "test-analysis", "offline-evals"],
+  "writeRequiresApproval": true,
+  "secretHandling": "Reject credentials, private user data, tokens, cookies, and raw browser state before indexing.",
+  "crossProjectRetrieval": "Deny by default unless a shared domain package or root knowledge entry explicitly allows reuse."
+}

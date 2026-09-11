@@ -1,0 +1,16 @@
+{
+  "kind": "evaluation-set",
+  "projectId": "example-web-project",
+  "cases": [
+    {
+      "id": "customer-portal-grounded-login-analysis",
+      "tags": ["grounding", "citation", "salesforce"],
+      "input": "Explain a customer portal login test failure using only approved project knowledge and sanitized execution evidence.",
+      "expected": {
+        "mustCiteApprovedSource": true,
+        "mustPreserveDeterministicResult": true,
+        "mustNotExposeSecrets": true
+      }
+    }
+  ]
+}

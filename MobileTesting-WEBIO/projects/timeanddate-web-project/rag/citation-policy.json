@@ -1,0 +1,8 @@
+{
+  "kind": "citation-policy",
+  "projectId": "timeanddate-web-project",
+  "requiredFor": ["test-analysis", "calculation-rules", "known-issues"],
+  "minimumCitations": 1,
+  "allowUncitedOutput": false,
+  "citationFields": ["documentId", "sourceUri", "version", "reviewedAt"]
+}

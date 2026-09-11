@@ -31,6 +31,9 @@ jobs:
       - name: Validate formatting, lint, and types
         run: pnpm validate
 
+      - name: Validate project RAG readiness
+        run: pnpm rag:validate
+
       - name: Run unit tests
         run: pnpm test:unit
 

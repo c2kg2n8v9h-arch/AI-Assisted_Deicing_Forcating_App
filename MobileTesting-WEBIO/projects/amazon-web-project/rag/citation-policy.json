@@ -1,0 +1,8 @@
+{
+  "kind": "citation-policy",
+  "projectId": "amazon-web-project",
+  "requiredFor": ["test-analysis", "product-page-behavior", "known-issues"],
+  "minimumCitations": 1,
+  "allowUncitedOutput": false,
+  "citationFields": ["documentId", "sourceUri", "version", "reviewedAt"]
+}

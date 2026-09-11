@@ -1,0 +1,8 @@
+{
+  "kind": "citation-policy",
+  "projectId": "example-web-project",
+  "requiredFor": ["requirements", "release-notes", "known-issues", "support-procedures"],
+  "minimumCitations": 1,
+  "allowUncitedOutput": false,
+  "citationFields": ["documentId", "sourceUri", "version", "reviewedAt"]
+}

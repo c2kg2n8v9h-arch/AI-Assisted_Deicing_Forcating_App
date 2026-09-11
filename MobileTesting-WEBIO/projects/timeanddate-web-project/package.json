@@ -1,0 +1,17 @@
+{
+  "name": "@automation-platform/timeanddate-web-project",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Timeanddate web automation project with project-local RAG governance",
+  "type": "module",
+  "scripts": {
+    "config:check": "cross-env PROJECT_CONFIG=projects/timeanddate-web-project/project.config.json pnpm --filter @automation-platform/webdriverio-runner config:check",
+    "test:chrome": "node ./run.mjs",
+    "rag:validate": "node ../../scripts/validate-rag-readiness.mjs"
+  },
+  "devDependencies": {
+    "@automation-platform/webdriverio-runner": "workspace:*",
+    "cross-env": "^10.1.0",
+    "webdriverio": "^9.31.5"
+  }
+}
